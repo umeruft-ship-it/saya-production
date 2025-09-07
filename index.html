@@ -269,18 +269,52 @@
                                     <input type="text" name="design" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
                                 </div>
                                 <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Design Height (Inches)</label>
+                                    <input type="number" name="designHeight" step="0.1" placeholder="e.g. 5.5" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Lot #</label>
+                                    <input type="text" name="lotNumber" placeholder="e.g. LOT-2024-001" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                                </div>
+                                <div>
                                     <label class="block text-sm font-semibold text-gray-700 mb-2">Quantity</label>
                                     <input type="number" name="quantity" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
                                 </div>
                                 <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Embroidery Placement</label>
+                                    <select name="embroideryPlacement" id="embroideryPlacement" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                                        <option value="">Select Placement</option>
+                                        <option value="All-Over">All-Over</option>
+                                        <option value="Eyelet">Eyelet</option>
+                                        <option value="Custom">Custom</option>
+                                    </select>
+                                </div>
+                                <div id="customPlacementDiv" class="hidden">
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Custom Placement Details</label>
+                                    <input type="text" name="customPlacement" placeholder="Describe custom placement..." class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                                </div>
+                                <div>
                                     <label class="block text-sm font-semibold text-gray-700 mb-2">Fabric Type</label>
-                                    <select name="fabric" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                                    <select name="fabric" id="fabricType" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
                                         <option value="">Select Fabric</option>
                                         <option value="Cotton">Cotton</option>
                                         <option value="Silk">Silk</option>
                                         <option value="Polyester">Polyester</option>
                                         <option value="Linen">Linen</option>
+                                        <option value="Custom">Custom</option>
                                     </select>
+                                </div>
+                                <div id="customFabricDiv" class="hidden">
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Custom Fabric Type</label>
+                                    <input type="text" name="customFabric" placeholder="Enter custom fabric type..." class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Yarn Type</label>
+                                    <input type="text" name="yarnType" placeholder="e.g. Rayon, Polyester, Cotton" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Stitches</label>
+                                    <input type="text" name="stitches" placeholder="e.g. 15,000 stitches" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-semibold text-gray-700 mb-2">Priority</label>
@@ -293,6 +327,28 @@
                                 <div>
                                     <label class="block text-sm font-semibold text-gray-700 mb-2">Delivery Date</label>
                                     <input type="date" name="deliveryDate" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                                </div>
+                            </div>
+                            
+                            <!-- Design Image Upload -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Design Image</label>
+                                <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-blue-400 transition-colors">
+                                    <input type="file" name="designImage" id="designImage" accept="image/*" class="hidden">
+                                    <div id="imageUploadArea" class="cursor-pointer" onclick="document.getElementById('designImage').click()">
+                                        <div class="text-gray-400 mb-2">
+                                            <svg class="mx-auto h-12 w-12" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                            </svg>
+                                        </div>
+                                        <p class="text-sm text-gray-600">Click to upload design image</p>
+                                        <p class="text-xs text-gray-400 mt-1">PNG, JPG, GIF up to 10MB</p>
+                                    </div>
+                                    <div id="imagePreview" class="hidden mt-4">
+                                        <img id="previewImg" class="mx-auto max-h-32 rounded-lg shadow-md" alt="Design preview">
+                                        <p id="fileName" class="text-sm text-gray-600 mt-2"></p>
+                                        <button type="button" onclick="removeImage()" class="text-red-500 text-sm mt-1 hover:text-red-700">Remove</button>
+                                    </div>
                                 </div>
                             </div>
                             
@@ -610,6 +666,9 @@
             const orderForm = document.getElementById('orderForm');
             const submitBtn = document.getElementById('submitOrderBtn');
             
+            // Initialize form interactions
+            initializeFormInteractions();
+            
             orderForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
@@ -622,11 +681,19 @@
                     order_id: `ORD-2024-${orderCounter.toString().padStart(3, '0')}`,
                     customer: formData.get('customer'),
                     design: formData.get('design'),
+                    design_height: formData.get('designHeight') ? parseFloat(formData.get('designHeight')) : null,
+                    lot_number: formData.get('lotNumber'),
                     quantity: parseInt(formData.get('quantity')),
-                    fabric: formData.get('fabric'),
+                    embroidery_placement: formData.get('embroideryPlacement') === 'Custom' ? 
+                        `Custom: ${formData.get('customPlacement')}` : formData.get('embroideryPlacement'),
+                    fabric: formData.get('fabric') === 'Custom' ? 
+                        `Custom: ${formData.get('customFabric')}` : formData.get('fabric'),
+                    yarn_type: formData.get('yarnType'),
+                    stitches: formData.get('stitches'),
                     priority: formData.get('priority'),
                     delivery_date: formData.get('deliveryDate'),
                     instructions: formData.get('instructions'),
+                    design_image: formData.get('designImage') ? formData.get('designImage').name : null,
                     status: 'Pending',
                     created_at: new Date().toISOString()
                 };
@@ -871,35 +938,11 @@
 
         // Table creation helper
         function showTableCreationInstructions() {
+            // Show immediate notification
+            showNotification('✅ Connected! Now creating the orders table...', 'success');
+            
             setTimeout(() => {
-                const instructions = `
-🎯 NEXT STEP: Create the orders table in Supabase
-
-1. Go to your Supabase project dashboard
-2. Click "Table Editor" in the sidebar
-3. Click "Create a new table"
-4. Name: orders
-5. Add these columns:
-
-• id (int8) - Primary key ✅
-• order_id (text)
-• customer (text) 
-• design (text)
-• quantity (int4)
-• fabric (text)
-• priority (text)
-• delivery_date (date)
-• instructions (text)
-• status (text)
-• created_at (timestamptz) ✅
-
-6. Click "Save"
-
-Then refresh this page!
-                `;
-                
-                if (confirm(instructions + '\n\nClick OK to copy SQL command to clipboard')) {
-                    const sql = `CREATE TABLE orders (
+                const sql = `CREATE TABLE orders (
   id BIGSERIAL PRIMARY KEY,
   order_id TEXT,
   customer TEXT,
@@ -912,15 +955,146 @@ Then refresh this page!
   status TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );`;
+                
+                // Try to create table automatically first
+                createTableAutomatically(sql);
+                
+            }, 1000);
+        }
+        
+        async function createTableAutomatically(sql) {
+            try {
+                console.log('🔧 Attempting to create orders table automatically...');
+                
+                const { data, error } = await supabase.rpc('exec_sql', { sql_query: sql });
+                
+                if (error) {
+                    console.log('❌ Auto-creation failed, showing manual instructions');
+                    showManualInstructions(sql);
+                } else {
+                    console.log('✅ Table created successfully!');
+                    showNotification('🎉 Orders table created successfully!', 'success');
+                    updateConnectionStatus('✅ Database ready!', 'success');
                     
-                    navigator.clipboard.writeText(sql).then(() => {
-                        showNotification('SQL command copied! Paste it in Supabase SQL Editor.', 'success');
-                    }).catch(() => {
-                        console.log('SQL to create table:', sql);
-                        showNotification('Check console for SQL command to create table.', 'info');
-                    });
+                    // Try loading orders again
+                    setTimeout(() => {
+                        loadOrdersFromDatabase();
+                    }, 1000);
                 }
-            }, 2000);
+            } catch (error) {
+                console.log('❌ Auto-creation not available, showing manual instructions');
+                showManualInstructions(sql);
+            }
+        }
+        
+        function showManualInstructions(sql) {
+            const instructions = `
+🎯 FINAL STEP: Create the orders table
+
+OPTION 1 - Quick SQL Method (Recommended):
+1. Go to your Supabase project dashboard
+2. Click "SQL Editor" in the sidebar  
+3. Click "New Query"
+4. Paste the SQL command (copied to clipboard)
+5. Click "Run"
+
+OPTION 2 - Visual Method:
+1. Click "Table Editor" → "Create new table"
+2. Name: orders
+3. Add columns as shown in console
+
+The SQL command is ready in your clipboard!
+            `;
+            
+            // Copy SQL to clipboard
+            navigator.clipboard.writeText(sql).then(() => {
+                alert(instructions);
+                showNotification('📋 SQL command copied to clipboard!', 'success');
+            }).catch(() => {
+                console.log('📋 SQL COMMAND TO CREATE TABLE:');
+                console.log(sql);
+                alert(instructions + '\n\nSQL command is shown in the browser console.');
+                showNotification('Check console for SQL command', 'warning');
+            });
+        }
+
+        // Form interaction functions
+        function initializeFormInteractions() {
+            // Embroidery placement custom option
+            const embroideryPlacement = document.getElementById('embroideryPlacement');
+            const customPlacementDiv = document.getElementById('customPlacementDiv');
+            
+            embroideryPlacement.addEventListener('change', function() {
+                if (this.value === 'Custom') {
+                    customPlacementDiv.classList.remove('hidden');
+                    customPlacementDiv.querySelector('input').required = true;
+                } else {
+                    customPlacementDiv.classList.add('hidden');
+                    customPlacementDiv.querySelector('input').required = false;
+                }
+            });
+            
+            // Fabric type custom option
+            const fabricType = document.getElementById('fabricType');
+            const customFabricDiv = document.getElementById('customFabricDiv');
+            
+            fabricType.addEventListener('change', function() {
+                if (this.value === 'Custom') {
+                    customFabricDiv.classList.remove('hidden');
+                    customFabricDiv.querySelector('input').required = true;
+                } else {
+                    customFabricDiv.classList.add('hidden');
+                    customFabricDiv.querySelector('input').required = false;
+                }
+            });
+            
+            // Image upload handling
+            const designImage = document.getElementById('designImage');
+            designImage.addEventListener('change', handleImageUpload);
+        }
+        
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // Validate file size (10MB limit)
+            if (file.size > 10 * 1024 * 1024) {
+                showNotification('Image file too large. Please select a file under 10MB.', 'error');
+                event.target.value = '';
+                return;
+            }
+            
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                showNotification('Please select a valid image file.', 'error');
+                event.target.value = '';
+                return;
+            }
+            
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imageUploadArea = document.getElementById('imageUploadArea');
+                const imagePreview = document.getElementById('imagePreview');
+                const previewImg = document.getElementById('previewImg');
+                const fileName = document.getElementById('fileName');
+                
+                imageUploadArea.classList.add('hidden');
+                imagePreview.classList.remove('hidden');
+                previewImg.src = e.target.result;
+                fileName.textContent = file.name;
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function removeImage() {
+            const designImage = document.getElementById('designImage');
+            const imageUploadArea = document.getElementById('imageUploadArea');
+            const imagePreview = document.getElementById('imagePreview');
+            
+            designImage.value = '';
+            imageUploadArea.classList.remove('hidden');
+            imagePreview.classList.add('hidden');
         }
 
         // Notification system
@@ -949,5 +1123,5 @@ Then refresh this page!
             }
         }
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b58a8d5767fde7',t:'MTc1NzI0MTEzNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b59e64051af93e',t:'MTc1NzI0MTk0OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
