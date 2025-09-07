@@ -361,7 +361,7 @@
     </div>
 
     <script>
-
+        //
         const SUPABASE_URL = https://rhppryujbwmyxaguqkbk.supabase.co;
         const SUPABASE_ANON_KEY = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJocHByeXVqYndteXhhZ3Vxa2JrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcyMzc4MjAsImV4cCI6MjA3MjgxMzgyMH0.X_w5HWExraY5al-vwl9slch2-N5tAzl-Vjfeda1lUh4;
         
@@ -408,23 +408,57 @@
         // Database functions
         async function loadOrdersFromDatabase() {
             try {
-                const { data, error } = await supabase
+                console.log('Testing database connection...');
+                
+                // First test basic connection
+                const { data: testData, error: testError } = await supabase
                     .from('orders')
-                    .select('*')
-                    .order('created_at', { ascending: false });
+                    .select('count', { count: 'exact', head: true });
                 
-                if (error) throw error;
-                
-                orders = data || [];
-                updateOrdersDisplay();
-                updateDashboardStats();
-                showNotification('Orders loaded from database', 'success');
+                if (testError) {
+                    console.error('Database test error:', testError);
+                    
+                    // Check specific error types
+                    if (testError.message.includes('relation "orders" does not exist') || 
+                        testError.code === 'PGRST116' ||
+                        testError.message.includes('table "public.orders" does not exist')) {
+                        updateConnectionStatus('✅ Connected - Need to create orders table', 'warning');
+                        showNotification('Database connected! Please create the orders table in Supabase.', 'warning');
+                        showTableCreationInstructions();
+                    } else if (testError.message.includes('Invalid API key') || 
+                               testError.message.includes('JWT') ||
+                               testError.code === 'PGRST301') {
+                        updateConnectionStatus('❌ Invalid credentials', 'error');
+                        showNotification('Database credentials are invalid. Check your Supabase URL and API key.', 'error');
+                    } else {
+                        updateConnectionStatus('❌ Connection failed', 'error');
+                        showNotification(`Database error: ${testError.message}`, 'error');
+                    }
+                } else {
+                    // Connection successful, now get orders
+                    console.log('Database connected successfully, loading orders...');
+                    const { data, error } = await supabase
+                        .from('orders')
+                        .select('*')
+                        .order('created_at', { ascending: false });
+                    
+                    if (error) throw error;
+                    
+                    orders = data || [];
+                    updateOrdersDisplay();
+                    updateDashboardStats();
+                    updateConnectionStatus('✅ Database connected', 'success');
+                    showNotification(`Loaded ${orders.length} orders from database`, 'success');
+                    return; // Success, don't fall back to localStorage
+                }
             } catch (error) {
-                console.error('Error loading orders:', error);
-                showNotification('Failed to load orders from database', 'error');
-                // Fallback to localStorage
-                loadOrdersFromLocalStorage();
+                console.error('Unexpected database error:', error);
+                updateConnectionStatus('❌ Connection failed', 'error');
+                showNotification(`Database error: ${error.message}`, 'error');
             }
+            
+            // Fallback to localStorage
+            loadOrdersFromLocalStorage();
         }
 
         async function saveOrderToDatabase(order) {
@@ -802,6 +836,60 @@
             }
         }
 
+        // Table creation helper
+        function showTableCreationInstructions() {
+            setTimeout(() => {
+                const instructions = `
+🎯 NEXT STEP: Create the orders table in Supabase
+
+1. Go to your Supabase project dashboard
+2. Click "Table Editor" in the sidebar
+3. Click "Create a new table"
+4. Name: orders
+5. Add these columns:
+
+• id (int8) - Primary key ✅
+• order_id (text)
+• customer (text) 
+• design (text)
+• quantity (int4)
+• fabric (text)
+• priority (text)
+• delivery_date (date)
+• instructions (text)
+• status (text)
+• created_at (timestamptz) ✅
+
+6. Click "Save"
+
+Then refresh this page!
+                `;
+                
+                if (confirm(instructions + '\n\nClick OK to copy SQL command to clipboard')) {
+                    const sql = `CREATE TABLE orders (
+  id BIGSERIAL PRIMARY KEY,
+  order_id TEXT,
+  customer TEXT,
+  design TEXT,
+  quantity INTEGER,
+  fabric TEXT,
+  priority TEXT,
+  delivery_date DATE,
+  instructions TEXT,
+  status TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);`;
+                    
+                    navigator.clipboard.writeText(sql).then(() => {
+                        showNotification('SQL command copied! Paste it in Supabase SQL Editor.', 'success');
+                    }).catch(() => {
+                        console.log('SQL to create table:', sql);
+                        showNotification('Check console for SQL command to create table.', 'info');
+                    });
+                }
+            }, 2000);
+        }
+
         // Notification system
         function showNotification(message, type = 'info') {
             const container = document.getElementById('notificationContainer');
@@ -828,5 +916,5 @@
             }
         }
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b56058918ce1ac',t:'MTc1NzIzOTQwNy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b572d5c7dc44c3',t:'MTc1NzI0MDE2NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
