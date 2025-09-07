@@ -444,7 +444,8 @@
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Order ID</th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Customer</th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Design</th>
-                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Quantity</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Lot #</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Quantity (m)</th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Priority</th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
@@ -452,7 +453,7 @@
                         </thead>
                         <tbody id="ordersTableBody" class="bg-white divide-y divide-gray-200">
                             <tr>
-                                <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                                <td colspan="8" class="px-6 py-8 text-center text-gray-500">
                                     <div class="loading-spinner mx-auto mb-4"></div>
                                     Loading orders...
                                 </td>
@@ -941,13 +942,28 @@
                         const savedOrder = await saveOrderToDatabase(order);
                         orders.unshift(savedOrder);
                         orderCounter++;
+                        
+                        // Cache image data if available
+                        if (window.currentUploadedImage && window.currentUploadedImage.fileName === order.design_image) {
+                            localStorage.setItem(`design_image_${savedOrder.order_id}`, window.currentUploadedImage.dataUrl);
+                        }
+                        
                         showNotification('Order saved to database!', 'success');
                     } else {
                         // Save to localStorage
                         order.id = Date.now(); // Add a simple ID for localStorage
                         saveOrderToLocalStorage(order);
+                        
+                        // Cache image data if available
+                        if (window.currentUploadedImage && window.currentUploadedImage.fileName === order.design_image) {
+                            localStorage.setItem(`design_image_${order.order_id}`, window.currentUploadedImage.dataUrl);
+                        }
+                        
                         showNotification('Order saved locally! (Database not connected)', 'warning');
                     }
+                    
+                    // Clear the temporary image cache
+                    window.currentUploadedImage = null;
                     
                     // Update display
                     updateOrdersDisplay();
@@ -956,6 +972,12 @@
                     // Close modal and reset form
                     document.getElementById('orderModal').classList.add('hidden');
                     orderForm.reset();
+                    
+                    // Reset image preview
+                    const imageUploadArea = document.getElementById('imageUploadArea');
+                    const imagePreview = document.getElementById('imagePreview');
+                    imageUploadArea.classList.remove('hidden');
+                    imagePreview.classList.add('hidden');
                     
                 } catch (error) {
                     console.error('Error saving order:', error);
@@ -992,7 +1014,7 @@
             if (orders.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                        <td colspan="8" class="px-6 py-8 text-center text-gray-500">
                             No orders found. Create your first order!
                         </td>
                     </tr>
@@ -1008,7 +1030,8 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${order.order_id}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${order.customer}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${order.design}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${order.quantity}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${order.lot_number || '-'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${order.quantity}m</td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <span class="px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}">
                             ${order.status}
@@ -1071,7 +1094,7 @@
                     <div class="w-2 h-2 rounded-full ${getStatusDotColor(order.status)}"></div>
                     <div class="flex-1">
                         <p class="text-sm text-gray-900">${order.order_id} - ${order.customer}</p>
-                        <p class="text-xs text-gray-500">${order.design} • ${order.quantity} units</p>
+                        <p class="text-xs text-gray-500">${order.design} • ${order.quantity}m</p>
                     </div>
                     <span class="text-xs text-gray-400">${formatDate(order.created_at)}</span>
                 </div>
@@ -1146,8 +1169,18 @@
 
         // Order actions
         function editOrderStatus(orderId) {
-            const order = orders.find(o => (o.id === orderId || o.order_id === orderId));
+            console.log('Looking for order with ID:', orderId);
+            console.log('Available orders:', orders);
+            
+            const order = orders.find(o => {
+                // Convert both to strings for comparison
+                const oId = String(o.id || o.order_id);
+                const searchId = String(orderId);
+                return oId === searchId;
+            });
+            
             if (!order) {
+                console.error('Order not found. Available order IDs:', orders.map(o => o.id || o.order_id));
                 showNotification('Order not found!', 'error');
                 return;
             }
@@ -1156,7 +1189,7 @@
             document.getElementById('editOrderId').value = order.id || order.order_id;
             document.getElementById('editOrderInfo').innerHTML = `
                 <strong>${order.order_id}</strong> - ${order.customer}<br>
-                <span class="text-gray-500">${order.design} • ${order.quantity} units</span><br>
+                <span class="text-gray-500">${order.design} • ${order.quantity}m</span><br>
                 <span class="text-sm">Current Status: <span class="font-medium">${order.status}</span></span>
             `;
             document.getElementById('newStatus').value = order.status;
@@ -1180,8 +1213,16 @@
             
             try {
                 // Find the order
-                const orderIndex = orders.findIndex(o => (o.id === orderId || o.order_id === orderId));
+                const orderIndex = orders.findIndex(o => {
+                    // Convert both to strings for comparison
+                    const oId = String(o.id || o.order_id);
+                    const searchId = String(orderId);
+                    return oId === searchId;
+                });
+                
                 if (orderIndex === -1) {
+                    console.error('Order not found for update. Looking for:', orderId);
+                    console.error('Available order IDs:', orders.map(o => o.id || o.order_id));
                     throw new Error('Order not found');
                 }
                 
@@ -1232,8 +1273,18 @@
         }
 
         function generateJobCard(orderId) {
-            const order = orders.find(o => (o.id === orderId || o.order_id === orderId));
+            console.log('Looking for order with ID:', orderId);
+            console.log('Available orders:', orders);
+            
+            const order = orders.find(o => {
+                // Convert both to strings for comparison
+                const oId = String(o.id || o.order_id);
+                const searchId = String(orderId);
+                return oId === searchId;
+            });
+            
             if (!order) {
+                console.error('Order not found. Available order IDs:', orders.map(o => o.id || o.order_id));
                 showNotification('Order not found!', 'error');
                 return;
             }
@@ -1242,10 +1293,55 @@
             const jobCardContent = createJobCardHTML(order);
             document.getElementById('jobCardContent').innerHTML = jobCardContent;
             
+            // Load design image if available
+            if (order.design_image) {
+                loadDesignImagePreview(order);
+            }
+            
             // Show the modal
             document.getElementById('jobCardModal').classList.remove('hidden');
             
             showNotification('Job card generated successfully!', 'success');
+        }
+
+        function loadDesignImagePreview(order) {
+            // Try to find the uploaded image data
+            const designImageInput = document.getElementById('designImage');
+            const previewImg = document.getElementById('jobCardDesignPreview');
+            const placeholder = document.getElementById('jobCardImagePlaceholder');
+            
+            // Check if we have the image in the current session
+            if (designImageInput && designImageInput.files && designImageInput.files[0] && 
+                designImageInput.files[0].name === order.design_image) {
+                
+                // Load from current file input
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    previewImg.style.display = 'block';
+                    placeholder.style.display = 'none';
+                };
+                reader.readAsDataURL(designImageInput.files[0]);
+                
+            } else {
+                // Check localStorage for cached image
+                const cachedImage = localStorage.getItem(`design_image_${order.order_id}`);
+                if (cachedImage) {
+                    previewImg.src = cachedImage;
+                    previewImg.style.display = 'block';
+                    placeholder.style.display = 'none';
+                } else {
+                    // Show placeholder with file name
+                    placeholder.innerHTML = `
+                        <svg class="mx-auto h-12 w-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 48 48">
+                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <div class="text-sm">Design Image</div>
+                        <div class="text-xs text-gray-500 mt-1">${order.design_image}</div>
+                        <div class="text-xs text-gray-400 mt-1">Preview not available</div>
+                    `;
+                }
+            }
         }
 
         function createJobCardHTML(order) {
@@ -1289,8 +1385,12 @@
                                     <span class="text-gray-900">${order.design}</span>
                                 </div>
                                 <div class="flex justify-between">
+                                    <span class="font-medium text-gray-700">Lot #:</span>
+                                    <span class="text-gray-900">${order.lot_number || 'Not specified'}</span>
+                                </div>
+                                <div class="flex justify-between">
                                     <span class="font-medium text-gray-700">Quantity:</span>
-                                    <span class="text-gray-900 font-semibold">${order.quantity} units</span>
+                                    <span class="text-gray-900 font-semibold">${order.quantity} meters</span>
                                 </div>
                                 <div class="flex justify-between">
                                     <span class="font-medium text-gray-700">Priority:</span>
@@ -1340,6 +1440,45 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Design Image -->
+                    ${order.design_image ? `
+                    <div class="mb-8">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4 border-b border-gray-300 pb-2">Design Reference</h3>
+                        <div class="bg-gray-50 p-6 rounded-lg">
+                            <div class="flex flex-col lg:flex-row gap-6 items-start">
+                                <div class="flex-shrink-0">
+                                    <div class="w-64 h-48 bg-white border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center overflow-hidden">
+                                        <img id="jobCardDesignPreview" src="" alt="Design Preview" class="max-w-full max-h-full object-contain rounded" style="display: none;">
+                                        <div id="jobCardImagePlaceholder" class="text-center text-gray-400">
+                                            <svg class="mx-auto h-12 w-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 48 48">
+                                                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                            </svg>
+                                            <div class="text-sm">Design Preview</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="space-y-3">
+                                        <div class="flex justify-between">
+                                            <span class="font-medium text-gray-700">File Name:</span>
+                                            <span class="text-gray-900">${order.design_image}</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="font-medium text-gray-700">Design Size:</span>
+                                            <span class="text-gray-900">${order.design_height ? order.design_height + ' inches height' : 'Not specified'}</span>
+                                        </div>
+                                        <div class="bg-blue-50 p-3 rounded border-l-4 border-blue-400">
+                                            <div class="text-sm text-blue-800">
+                                                <strong>Production Note:</strong> Ensure design matches the uploaded reference image before starting production.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    ` : ''}
 
                     <!-- Instructions -->
                     ${order.instructions ? `
@@ -1485,9 +1624,19 @@
                         .h-12 { height: 3rem; }
                         .w-5 { width: 1.25rem; }
                         .h-5 { height: 1.25rem; }
+                        .w-64 { width: 16rem; }
+                        .h-48 { height: 12rem; }
+                        .max-w-full { max-width: 100%; }
+                        .max-h-full { max-height: 100%; }
+                        .object-contain { object-fit: contain; }
+                        .overflow-hidden { overflow: hidden; }
+                        .border-dashed { border-style: dashed; }
+                        .border-2 { border-width: 2px; }
                         @media print {
                             body { margin: 0; }
                             .no-print { display: none; }
+                            .w-64 { width: 12rem; }
+                            .h-48 { height: 9rem; }
                         }
                     </style>
                 </head>
@@ -1512,12 +1661,22 @@
             if (!confirm('Are you sure you want to delete this order?')) return;
             
             try {
+                console.log('Deleting order with ID:', orderId);
+                
                 if (isConnected) {
                     await deleteOrderFromDatabase(orderId);
-                    orders = orders.filter(o => o.id !== orderId && o.order_id !== orderId);
+                    orders = orders.filter(o => {
+                        const oId = String(o.id || o.order_id);
+                        const searchId = String(orderId);
+                        return oId !== searchId;
+                    });
                     showNotification('Order deleted from database!', 'success');
                 } else {
-                    orders = orders.filter(o => o.order_id !== orderId);
+                    orders = orders.filter(o => {
+                        const oId = String(o.id || o.order_id);
+                        const searchId = String(orderId);
+                        return oId !== searchId;
+                    });
                     localStorage.setItem('orders', JSON.stringify(orders));
                     showNotification('Order deleted locally!', 'warning');
                 }
@@ -1677,6 +1836,13 @@ The SQL command is ready in your clipboard!
                 imagePreview.classList.remove('hidden');
                 previewImg.src = e.target.result;
                 fileName.textContent = file.name;
+                
+                // Cache the image data for later use in job cards
+                // Store with a temporary key that will be updated when order is created
+                window.currentUploadedImage = {
+                    fileName: file.name,
+                    dataUrl: e.target.result
+                };
             };
             reader.readAsDataURL(file);
         }
@@ -2228,5 +2394,5 @@ CREATE INDEX idx_quality_control_passed ON quality_control(passed);`
             }
         }
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b5b95a22d289bc',t:'MTc1NzI0MzA1My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b5cd4d731fe1ac',t:'MTc1NzI0Mzg3MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
