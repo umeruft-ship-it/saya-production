@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Schiffli Embroidery Production Management System</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
         
@@ -23,10 +24,6 @@
         .card-hover:hover {
             transform: translateY(-4px);
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
-        
-        .progress-bar {
-            transition: width 0.5s ease-in-out;
         }
         
         .notification {
@@ -70,6 +67,11 @@
             right: 20px;
             z-index: 1000;
         }
+        
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 min-h-screen">
@@ -96,19 +98,19 @@
                     <div class="grid grid-cols-4 gap-6">
                         <div class="text-center">
                             <p class="text-xs text-gray-500 font-medium">Active Orders</p>
-                            <p class="text-2xl font-bold text-blue-600" id="headerActiveOrders">5</p>
+                            <p class="text-2xl font-bold text-blue-600" id="headerActiveOrders">0</p>
                         </div>
                         <div class="text-center">
                             <p class="text-xs text-gray-500 font-medium">Production</p>
-                            <p class="text-2xl font-bold text-green-600" id="headerProduction">3</p>
+                            <p class="text-2xl font-bold text-green-600" id="headerProduction">0</p>
                         </div>
                         <div class="text-center">
                             <p class="text-xs text-gray-500 font-medium">Quality Queue</p>
-                            <p class="text-2xl font-bold text-yellow-600" id="headerQuality">2</p>
+                            <p class="text-2xl font-bold text-yellow-600" id="headerQuality">0</p>
                         </div>
                         <div class="text-center">
                             <p class="text-xs text-gray-500 font-medium">Ready</p>
-                            <p class="text-2xl font-bold text-purple-600" id="headerReady">1</p>
+                            <p class="text-2xl font-bold text-purple-600" id="headerReady">0</p>
                         </div>
                     </div>
                     
@@ -155,24 +157,6 @@
                         <span>Quality Control</span>
                     </span>
                 </button>
-                <button class="nav-tab px-6 py-4 text-gray-600 hover:text-blue-600 font-medium whitespace-nowrap transition-colors" data-section="machines">
-                    <span class="flex items-center space-x-2">
-                        <span>🏭</span>
-                        <span>Machines</span>
-                    </span>
-                </button>
-                <button class="nav-tab px-6 py-4 text-gray-600 hover:text-blue-600 font-medium whitespace-nowrap transition-colors" data-section="dispatch">
-                    <span class="flex items-center space-x-2">
-                        <span>🚚</span>
-                        <span>Dispatch</span>
-                    </span>
-                </button>
-                <button class="nav-tab px-6 py-4 text-gray-600 hover:text-blue-600 font-medium whitespace-nowrap transition-colors" data-section="reports">
-                    <span class="flex items-center space-x-2">
-                        <span>📈</span>
-                        <span>Reports</span>
-                    </span>
-                </button>
             </div>
         </div>
     </nav>
@@ -182,24 +166,22 @@
         <div id="dashboard" class="section">
             <div class="flex justify-between items-center mb-8">
                 <h2 class="text-3xl font-bold text-gray-900">CEO Dashboard</h2>
-                <div class="flex space-x-3">
-                    <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                        📊 Live Analytics
-                    </button>
-                    <button class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
-                        📈 Export Report
-                    </button>
+                <div class="flex items-center space-x-3">
+                    <div id="connectionStatus" class="px-3 py-1 rounded-full text-sm font-medium">
+                        <span class="loading-spinner inline-block w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin mr-2"></span>
+                        Connecting to database...
+                    </div>
                 </div>
             </div>
             
             <!-- Key Metrics -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <div class="card-hover bg-white rounded-2xl shadow-lg p-6 border-l-4 border-blue-500">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-medium text-gray-600">Active Orders</p>
-                            <p class="text-4xl font-bold text-gray-900 mt-2">5</p>
-                            <p class="text-xs text-green-600 mt-1">↗ +12% from last week</p>
+                            <p class="text-sm font-medium text-gray-600">Total Orders</p>
+                            <p class="text-4xl font-bold text-gray-900 mt-2" id="totalOrdersCount">0</p>
+                            <p class="text-xs text-blue-600 mt-1">All time</p>
                         </div>
                         <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center">
                             <span class="text-blue-600 text-2xl">📋</span>
@@ -210,12 +192,12 @@
                 <div class="card-hover bg-white rounded-2xl shadow-lg p-6 border-l-4 border-green-500">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-medium text-gray-600">Production Efficiency</p>
-                            <p class="text-4xl font-bold text-gray-900 mt-2">87%</p>
-                            <p class="text-xs text-green-600 mt-1">↗ +5% from yesterday</p>
+                            <p class="text-sm font-medium text-gray-600">Pending Orders</p>
+                            <p class="text-4xl font-bold text-gray-900 mt-2" id="pendingOrdersCount">0</p>
+                            <p class="text-xs text-green-600 mt-1">Awaiting production</p>
                         </div>
                         <div class="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center">
-                            <span class="text-green-600 text-2xl">⚡</span>
+                            <span class="text-green-600 text-2xl">⏳</span>
                         </div>
                     </div>
                 </div>
@@ -223,12 +205,12 @@
                 <div class="card-hover bg-white rounded-2xl shadow-lg p-6 border-l-4 border-yellow-500">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-medium text-gray-600">In Quality</p>
-                            <p class="text-4xl font-bold text-gray-900 mt-2">2</p>
-                            <p class="text-xs text-yellow-600 mt-1">→ Same as yesterday</p>
+                            <p class="text-sm font-medium text-gray-600">In Production</p>
+                            <p class="text-4xl font-bold text-gray-900 mt-2" id="productionOrdersCount">0</p>
+                            <p class="text-xs text-yellow-600 mt-1">Active jobs</p>
                         </div>
                         <div class="w-16 h-16 bg-yellow-100 rounded-2xl flex items-center justify-center">
-                            <span class="text-yellow-600 text-2xl">🔍</span>
+                            <span class="text-yellow-600 text-2xl">⚙️</span>
                         </div>
                     </div>
                 </div>
@@ -236,100 +218,24 @@
                 <div class="card-hover bg-white rounded-2xl shadow-lg p-6 border-l-4 border-purple-500">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-medium text-gray-600">Ready Dispatch</p>
-                            <p class="text-4xl font-bold text-gray-900 mt-2">1</p>
-                            <p class="text-xs text-purple-600 mt-1">↗ +3 since morning</p>
+                            <p class="text-sm font-medium text-gray-600">Completed</p>
+                            <p class="text-4xl font-bold text-gray-900 mt-2" id="completedOrdersCount">0</p>
+                            <p class="text-xs text-purple-600 mt-1">This month</p>
                         </div>
                         <div class="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center">
-                            <span class="text-purple-600 text-2xl">📦</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="card-hover bg-white rounded-2xl shadow-lg p-6 border-l-4 border-red-500">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-gray-600">Machine Utilization</p>
-                            <p class="text-4xl font-bold text-gray-900 mt-2">78%</p>
-                            <p class="text-xs text-red-600 mt-1">↘ -2% from yesterday</p>
-                        </div>
-                        <div class="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center">
-                            <span class="text-red-600 text-2xl">⚙️</span>
+                            <span class="text-purple-600 text-2xl">✅</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Production Flow Chart -->
-            <div class="card-hover bg-white rounded-2xl shadow-lg p-8 mb-8">
-                <h3 class="text-2xl font-semibold text-gray-900 mb-6">Production Flow Status</h3>
-                <div class="flex items-center justify-between space-x-4 overflow-x-auto">
-                    <div class="flex flex-col items-center min-w-0 flex-1">
-                        <div class="w-20 h-20 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-2xl mb-3 shadow-lg">
-                            <span>2</span>
-                        </div>
-                        <p class="text-sm font-semibold text-gray-900">Orders Received</p>
-                        <p class="text-xs text-gray-600">Pending Job Cards</p>
-                    </div>
-                    <div class="text-gray-400 text-2xl">→</div>
-                    <div class="flex flex-col items-center min-w-0 flex-1">
-                        <div class="w-20 h-20 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center text-white font-bold text-2xl mb-3 shadow-lg">
-                            <span>3</span>
-                        </div>
-                        <p class="text-sm font-semibold text-gray-900">In Production</p>
-                        <p class="text-xs text-gray-600">On Machines</p>
-                    </div>
-                    <div class="text-gray-400 text-2xl">→</div>
-                    <div class="flex flex-col items-center min-w-0 flex-1">
-                        <div class="w-20 h-20 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-full flex items-center justify-center text-white font-bold text-2xl mb-3 shadow-lg">
-                            <span>2</span>
-                        </div>
-                        <p class="text-sm font-semibold text-gray-900">Quality Check</p>
-                        <p class="text-xs text-gray-600">Inspection & Mending</p>
-                    </div>
-                    <div class="text-gray-400 text-2xl">→</div>
-                    <div class="flex flex-col items-center min-w-0 flex-1">
-                        <div class="w-20 h-20 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-2xl mb-3 shadow-lg">
-                            <span>1</span>
-                        </div>
-                        <p class="text-sm font-semibold text-gray-900">Ready Dispatch</p>
-                        <p class="text-xs text-gray-600">Awaiting Delivery</p>
-                    </div>
-                    <div class="text-gray-400 text-2xl">→</div>
-                    <div class="flex flex-col items-center min-w-0 flex-1">
-                        <div class="w-20 h-20 bg-gradient-to-r from-gray-500 to-gray-600 rounded-full flex items-center justify-center text-white font-bold text-2xl mb-3 shadow-lg">
-                            <span>0</span>
-                        </div>
-                        <p class="text-sm font-semibold text-gray-900">Rejected</p>
-                        <p class="text-xs text-gray-600">In Store</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Recent Activity -->
+            <!-- Recent Orders -->
             <div class="card-hover bg-white rounded-2xl shadow-lg p-6">
-                <h3 class="text-xl font-semibold text-gray-900 mb-4">Recent Activity</h3>
-                <div class="space-y-3">
-                    <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                        <div class="w-2 h-2 rounded-full bg-green-500"></div>
-                        <div class="flex-1">
-                            <p class="text-sm text-gray-900">Order ORD-2024-001 moved to Quality Check</p>
-                            <p class="text-xs text-gray-500">2 minutes ago</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                        <div class="w-2 h-2 rounded-full bg-blue-500"></div>
-                        <div class="flex-1">
-                            <p class="text-sm text-gray-900">Machine M-05 started production</p>
-                            <p class="text-xs text-gray-500">15 minutes ago</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                        <div class="w-2 h-2 rounded-full bg-yellow-500"></div>
-                        <div class="flex-1">
-                            <p class="text-sm text-gray-900">Yarn issued for Order ORD-2024-003</p>
-                            <p class="text-xs text-gray-500">1 hour ago</p>
-                        </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">Recent Orders</h3>
+                <div id="recentOrdersList" class="space-y-3">
+                    <div class="text-center py-8 text-gray-500">
+                        <div class="loading-spinner mx-auto mb-4"></div>
+                        Loading recent orders...
                     </div>
                 </div>
             </div>
@@ -397,7 +303,9 @@
                             
                             <div class="flex justify-end space-x-4 pt-6">
                                 <button type="button" id="cancelOrder" class="px-8 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-medium transition-all">Cancel</button>
-                                <button type="submit" class="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 font-semibold transition-all">Create Order</button>
+                                <button type="submit" id="submitOrderBtn" class="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 font-semibold transition-all">
+                                    Create Order
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -423,82 +331,61 @@
                             </tr>
                         </thead>
                         <tbody id="ordersTableBody" class="bg-white divide-y divide-gray-200">
-                            <!-- Orders will be populated here -->
+                            <tr>
+                                <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                                    <div class="loading-spinner mx-auto mb-4"></div>
+                                    Loading orders...
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
 
-        <!-- Other sections (simplified for deployment) -->
+        <!-- Other sections -->
         <div id="yarn" class="section hidden">
             <h2 class="text-3xl font-bold text-gray-900 mb-8">Yarn Stock Management</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div class="card-hover bg-white rounded-2xl shadow-lg p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Cotton Yarn</h3>
-                    <p class="text-2xl font-bold text-green-600">2,450 kg</p>
-                    <div class="w-full bg-gray-200 rounded-full h-3 mt-2">
-                        <div class="bg-green-500 h-3 rounded-full" style="width: 82%"></div>
-                    </div>
-                    <p class="text-xs text-green-600 mt-1">82% of capacity</p>
-                </div>
-                <div class="card-hover bg-white rounded-2xl shadow-lg p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Silk Yarn</h3>
-                    <p class="text-2xl font-bold text-blue-600">890 kg</p>
-                    <div class="w-full bg-gray-200 rounded-full h-3 mt-2">
-                        <div class="bg-blue-500 h-3 rounded-full" style="width: 67%"></div>
-                    </div>
-                    <p class="text-xs text-blue-600 mt-1">67% of capacity</p>
-                </div>
-            </div>
+            <p class="text-gray-600">Yarn management coming soon with database integration...</p>
         </div>
 
         <div id="production" class="section hidden">
             <h2 class="text-3xl font-bold text-gray-900 mb-8">Production Management</h2>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div class="card-hover bg-white rounded-xl shadow-lg p-6">
-                    <h3 class="text-sm font-medium text-gray-600">Active Jobs</h3>
-                    <p class="text-3xl font-bold text-blue-600">8</p>
-                </div>
-                <div class="card-hover bg-white rounded-xl shadow-lg p-6">
-                    <h3 class="text-sm font-medium text-gray-600">Completed Today</h3>
-                    <p class="text-3xl font-bold text-green-600">12</p>
-                </div>
-            </div>
+            <p class="text-gray-600">Production tracking coming soon...</p>
         </div>
 
         <div id="quality" class="section hidden">
             <h2 class="text-3xl font-bold text-gray-900 mb-8">Quality Control</h2>
-            <p class="text-gray-600">Quality control management interface</p>
+            <p class="text-gray-600">Quality control system coming soon...</p>
         </div>
-
-        <div id="machines" class="section hidden">
-            <h2 class="text-3xl font-bold text-gray-900 mb-8">Machine Management</h2>
-            <p class="text-gray-600">Machine status and management interface</p>
-        </div>
-
-        <div id="dispatch" class="section hidden">
-            <h2 class="text-3xl font-bold text-gray-900 mb-8">Dispatch Management</h2>
-            <p class="text-gray-600">Dispatch and delivery management interface</p>
-        </div>
-
-        <div id="reports" class="section hidden">
-            <h2 class="text-3xl font-bold text-gray-900 mb-8">Reports & Analytics</h2>
-            <p class="text-gray-600">Reports and analytics dashboard</p>
-        </div>
-    </div>
-
-    <!-- Floating Action Button -->
-    <div class="floating-action">
-        <button id="quickActionBtn" class="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full shadow-2xl hover:shadow-3xl transition-all transform hover:scale-110 flex items-center justify-center">
-            <span class="text-2xl">⚡</span>
-        </button>
     </div>
 
     <script>
+        // ⚠️ REPLACE THESE WITH YOUR SUPABASE CREDENTIALS
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL_HERE';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY_HERE';
+        
+        // Initialize Supabase client
+        let supabase;
+        let isConnected = false;
+        
+        // Try to initialize Supabase
+        try {
+            if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE' && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY_HERE') {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                isConnected = true;
+                updateConnectionStatus('Connected to database', 'success');
+            } else {
+                updateConnectionStatus('Database not configured', 'warning');
+            }
+        } catch (error) {
+            console.error('Supabase initialization error:', error);
+            updateConnectionStatus('Database connection failed', 'error');
+        }
+        
         // Application state
-        let orders = JSON.parse(localStorage.getItem('orders')) || [];
-        let orderCounter = parseInt(localStorage.getItem('orderCounter')) || 1;
+        let orders = [];
+        let orderCounter = 1;
 
         // Initialize application
         document.addEventListener('DOMContentLoaded', function() {
@@ -506,11 +393,87 @@
             initializeModals();
             initializeOrderForm();
             updateTime();
-            loadOrders();
+            
+            if (isConnected) {
+                loadOrdersFromDatabase();
+            } else {
+                // Fallback to localStorage
+                loadOrdersFromLocalStorage();
+            }
             
             // Update time every second
             setInterval(updateTime, 1000);
         });
+
+        // Database functions
+        async function loadOrdersFromDatabase() {
+            try {
+                const { data, error } = await supabase
+                    .from('orders')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                
+                if (error) throw error;
+                
+                orders = data || [];
+                updateOrdersDisplay();
+                updateDashboardStats();
+                showNotification('Orders loaded from database', 'success');
+            } catch (error) {
+                console.error('Error loading orders:', error);
+                showNotification('Failed to load orders from database', 'error');
+                // Fallback to localStorage
+                loadOrdersFromLocalStorage();
+            }
+        }
+
+        async function saveOrderToDatabase(order) {
+            try {
+                const { data, error } = await supabase
+                    .from('orders')
+                    .insert([order])
+                    .select();
+                
+                if (error) throw error;
+                
+                return data[0];
+            } catch (error) {
+                console.error('Error saving order:', error);
+                throw error;
+            }
+        }
+
+        async function deleteOrderFromDatabase(orderId) {
+            try {
+                const { error } = await supabase
+                    .from('orders')
+                    .delete()
+                    .eq('id', orderId);
+                
+                if (error) throw error;
+                
+                return true;
+            } catch (error) {
+                console.error('Error deleting order:', error);
+                throw error;
+            }
+        }
+
+        // Fallback localStorage functions
+        function loadOrdersFromLocalStorage() {
+            orders = JSON.parse(localStorage.getItem('orders')) || [];
+            orderCounter = parseInt(localStorage.getItem('orderCounter')) || 1;
+            updateOrdersDisplay();
+            updateDashboardStats();
+            updateConnectionStatus('Using local storage', 'warning');
+        }
+
+        function saveOrderToLocalStorage(order) {
+            orders.push(order);
+            orderCounter++;
+            localStorage.setItem('orders', JSON.stringify(orders));
+            localStorage.setItem('orderCounter', orderCounter.toString());
+        }
 
         // Navigation system
         function initializeNavigation() {
@@ -571,54 +534,83 @@
         // Order form handling
         function initializeOrderForm() {
             const orderForm = document.getElementById('orderForm');
+            const submitBtn = document.getElementById('submitOrderBtn');
             
-            orderForm.addEventListener('submit', function(e) {
+            orderForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
+                
+                // Show loading state
+                submitBtn.innerHTML = '<div class="loading-spinner mr-2"></div>Creating...';
+                submitBtn.disabled = true;
                 
                 const formData = new FormData(orderForm);
                 const order = {
-                    id: `ORD-2024-${orderCounter.toString().padStart(3, '0')}`,
+                    order_id: `ORD-2024-${orderCounter.toString().padStart(3, '0')}`,
                     customer: formData.get('customer'),
                     design: formData.get('design'),
                     quantity: parseInt(formData.get('quantity')),
                     fabric: formData.get('fabric'),
                     priority: formData.get('priority'),
-                    deliveryDate: formData.get('deliveryDate'),
+                    delivery_date: formData.get('deliveryDate'),
                     instructions: formData.get('instructions'),
                     status: 'Pending',
-                    createdAt: new Date().toISOString()
+                    created_at: new Date().toISOString()
                 };
                 
-                // Add to orders array
-                orders.push(order);
-                orderCounter++;
-                
-                // Save to localStorage
-                localStorage.setItem('orders', JSON.stringify(orders));
-                localStorage.setItem('orderCounter', orderCounter.toString());
-                
-                // Update display
-                loadOrders();
-                
-                // Close modal and reset form
-                document.getElementById('orderModal').classList.add('hidden');
-                orderForm.reset();
-                
-                showNotification('Order created successfully!', 'success');
+                try {
+                    if (isConnected) {
+                        // Save to Supabase
+                        const savedOrder = await saveOrderToDatabase(order);
+                        orders.unshift(savedOrder);
+                        orderCounter++;
+                        showNotification('Order saved to database!', 'success');
+                    } else {
+                        // Save to localStorage
+                        saveOrderToLocalStorage(order);
+                        showNotification('Order saved locally!', 'warning');
+                    }
+                    
+                    // Update display
+                    updateOrdersDisplay();
+                    updateDashboardStats();
+                    
+                    // Close modal and reset form
+                    document.getElementById('orderModal').classList.add('hidden');
+                    orderForm.reset();
+                    
+                } catch (error) {
+                    console.error('Error saving order:', error);
+                    showNotification('Failed to save order!', 'error');
+                } finally {
+                    // Reset button
+                    submitBtn.innerHTML = 'Create Order';
+                    submitBtn.disabled = false;
+                }
             });
         }
 
-        // Load and display orders
-        function loadOrders() {
+        // Update displays
+        function updateOrdersDisplay() {
             const tbody = document.getElementById('ordersTableBody');
             tbody.innerHTML = '';
+            
+            if (orders.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                            No orders found. Create your first order!
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
             
             orders.forEach(order => {
                 const row = document.createElement('tr');
                 row.className = 'hover:bg-gray-50 transition-colors';
                 
                 row.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${order.id}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${order.order_id}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${order.customer}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${order.design}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${order.quantity}</td>
@@ -634,15 +626,72 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div class="flex space-x-2">
-                            <button onclick="viewOrder('${order.id}')" class="text-blue-600 hover:text-blue-900 font-medium">View</button>
-                            <button onclick="editOrder('${order.id}')" class="text-green-600 hover:text-green-900 font-medium">Edit</button>
-                            <button onclick="deleteOrder('${order.id}')" class="text-red-600 hover:text-red-900 font-medium">Delete</button>
+                            <button onclick="viewOrder('${order.id || order.order_id}')" class="text-blue-600 hover:text-blue-900 font-medium">View</button>
+                            <button onclick="deleteOrder('${order.id || order.order_id}')" class="text-red-600 hover:text-red-900 font-medium">Delete</button>
                         </div>
                     </td>
                 `;
                 
                 tbody.appendChild(row);
             });
+        }
+
+        function updateDashboardStats() {
+            const totalOrders = orders.length;
+            const pendingOrders = orders.filter(o => o.status === 'Pending').length;
+            const productionOrders = orders.filter(o => o.status === 'In Production').length;
+            const completedOrders = orders.filter(o => o.status === 'Completed').length;
+            
+            document.getElementById('totalOrdersCount').textContent = totalOrders;
+            document.getElementById('pendingOrdersCount').textContent = pendingOrders;
+            document.getElementById('productionOrdersCount').textContent = productionOrders;
+            document.getElementById('completedOrdersCount').textContent = completedOrders;
+            
+            // Update header stats
+            document.getElementById('headerActiveOrders').textContent = totalOrders;
+            document.getElementById('headerProduction').textContent = productionOrders;
+            document.getElementById('headerQuality').textContent = 0;
+            document.getElementById('headerReady').textContent = completedOrders;
+            
+            // Update recent orders
+            updateRecentOrders();
+        }
+
+        function updateRecentOrders() {
+            const recentOrdersList = document.getElementById('recentOrdersList');
+            const recentOrders = orders.slice(0, 5);
+            
+            if (recentOrders.length === 0) {
+                recentOrdersList.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        No orders yet. Create your first order to get started!
+                    </div>
+                `;
+                return;
+            }
+            
+            recentOrdersList.innerHTML = recentOrders.map(order => `
+                <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                    <div class="w-2 h-2 rounded-full ${getStatusDotColor(order.status)}"></div>
+                    <div class="flex-1">
+                        <p class="text-sm text-gray-900">${order.order_id} - ${order.customer}</p>
+                        <p class="text-xs text-gray-500">${order.design} • ${order.quantity} units</p>
+                    </div>
+                    <span class="text-xs text-gray-400">${formatDate(order.created_at)}</span>
+                </div>
+            `).join('');
+        }
+
+        function updateConnectionStatus(message, type) {
+            const statusElement = document.getElementById('connectionStatus');
+            const colors = {
+                success: 'bg-green-100 text-green-800',
+                warning: 'bg-yellow-100 text-yellow-800',
+                error: 'bg-red-100 text-red-800'
+            };
+            
+            statusElement.className = `px-3 py-1 rounded-full text-sm font-medium ${colors[type]}`;
+            statusElement.innerHTML = message;
         }
 
         // Utility functions
@@ -652,7 +701,7 @@
                 case 'In Production': return 'bg-blue-100 text-blue-800';
                 case 'Quality Check': return 'bg-orange-100 text-orange-800';
                 case 'Ready for Dispatch': return 'bg-purple-100 text-purple-800';
-                case 'Dispatched': return 'bg-green-100 text-green-800';
+                case 'Completed': return 'bg-green-100 text-green-800';
                 default: return 'bg-gray-100 text-gray-800';
             }
         }
@@ -664,6 +713,20 @@
                 case 'Normal': return 'bg-gray-100 text-gray-800';
                 default: return 'bg-gray-100 text-gray-800';
             }
+        }
+
+        function getStatusDotColor(status) {
+            switch (status) {
+                case 'Pending': return 'bg-yellow-500';
+                case 'In Production': return 'bg-blue-500';
+                case 'Completed': return 'bg-green-500';
+                default: return 'bg-gray-500';
+            }
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString();
         }
 
         function updateTime() {
@@ -687,22 +750,31 @@
 
         // Order actions
         function viewOrder(orderId) {
-            const order = orders.find(o => o.id === orderId);
+            const order = orders.find(o => (o.id === orderId || o.order_id === orderId));
             if (order) {
-                alert(`Order Details:\n\nID: ${order.id}\nCustomer: ${order.customer}\nDesign: ${order.design}\nQuantity: ${order.quantity}\nStatus: ${order.status}`);
+                alert(`Order Details:\n\nID: ${order.order_id}\nCustomer: ${order.customer}\nDesign: ${order.design}\nQuantity: ${order.quantity}\nStatus: ${order.status}\nPriority: ${order.priority}`);
             }
         }
 
-        function editOrder(orderId) {
-            showNotification('Edit functionality coming soon!', 'info');
-        }
-
-        function deleteOrder(orderId) {
-            if (confirm('Are you sure you want to delete this order?')) {
-                orders = orders.filter(o => o.id !== orderId);
-                localStorage.setItem('orders', JSON.stringify(orders));
-                loadOrders();
-                showNotification('Order deleted successfully!', 'success');
+        async function deleteOrder(orderId) {
+            if (!confirm('Are you sure you want to delete this order?')) return;
+            
+            try {
+                if (isConnected) {
+                    await deleteOrderFromDatabase(orderId);
+                    orders = orders.filter(o => o.id !== orderId && o.order_id !== orderId);
+                    showNotification('Order deleted from database!', 'success');
+                } else {
+                    orders = orders.filter(o => o.order_id !== orderId);
+                    localStorage.setItem('orders', JSON.stringify(orders));
+                    showNotification('Order deleted locally!', 'warning');
+                }
+                
+                updateOrdersDisplay();
+                updateDashboardStats();
+            } catch (error) {
+                console.error('Error deleting order:', error);
+                showNotification('Failed to delete order!', 'error');
             }
         }
 
@@ -717,10 +789,10 @@
             
             container.appendChild(notification);
             
-            // Auto remove after 3 seconds
+            // Auto remove after 4 seconds
             setTimeout(() => {
                 notification.remove();
-            }, 3000);
+            }, 4000);
         }
         
         function getNotificationColor(type) {
@@ -731,11 +803,6 @@
                 default: return 'bg-blue-600';
             }
         }
-
-        // Quick action button
-        document.getElementById('quickActionBtn').addEventListener('click', function() {
-            showNotification('Quick actions menu coming soon!', 'info');
-        });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b4d804c6ca21e8',t:'MTc1NzIzMzgyNC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b5453d873ce9ea',t:'MTc1NzIzODI5Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
