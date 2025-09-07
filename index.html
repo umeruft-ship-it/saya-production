@@ -362,6 +362,8 @@
 
     <script>
         // ⚠️ REPLACE THESE WITH YOUR SUPABASE CREDENTIALS
+        // Example: const SUPABASE_URL = 'https://abcdefghijklmnop.supabase.co';
+        // Example: const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
         const SUPABASE_URL = 'https://rhppryujbwmyxaguqkbk.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJocHByeXVqYndteXhhZ3Vxa2JrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcyMzc4MjAsImV4cCI6MjA3MjgxMzgyMH0.X_w5HWExraY5al-vwl9slch2-N5tAzl-Vjfeda1lUh4';
         
@@ -369,18 +371,49 @@
         let supabase;
         let isConnected = false;
         
+        // Debug: Show what we're working with
+        console.log('🔍 DEBUGGING SUPABASE CONNECTION:');
+        console.log('URL configured:', SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE');
+        console.log('Key configured:', SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY_HERE');
+        
+        // Only check format if credentials are provided
+        if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE') {
+            console.log('URL starts with https:', SUPABASE_URL.startsWith('https://'));
+            console.log('URL ends with supabase.co:', SUPABASE_URL.endsWith('.supabase.co'));
+        }
+        
+        if (SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY_HERE') {
+            console.log('Key starts with eyJ:', SUPABASE_ANON_KEY.startsWith('eyJ'));
+        }
+        
         // Try to initialize Supabase
         try {
             if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE' && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY_HERE') {
+                console.log('✅ Credentials provided, initializing Supabase...');
+                
+                // Validate URL format
+                if (!SUPABASE_URL.startsWith('https://') || !SUPABASE_URL.endsWith('.supabase.co')) {
+                    throw new Error('Invalid Supabase URL format. Should be: https://your-project.supabase.co');
+                }
+                
+                // Validate key format
+                if (!SUPABASE_ANON_KEY.startsWith('eyJ')) {
+                    throw new Error('Invalid API key format. Should start with "eyJ"');
+                }
+                
                 supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
                 isConnected = true;
-                updateConnectionStatus('Connected to database', 'success');
+                console.log('✅ Supabase client created successfully');
+                updateConnectionStatus('Credentials loaded - Testing connection...', 'warning');
             } else {
-                updateConnectionStatus('Database not configured', 'warning');
+                console.log('⚠️ Credentials not configured yet');
+                updateConnectionStatus('❌ Please add your Supabase credentials', 'error');
+                showNotification('Add your Supabase URL and API key to connect to database', 'warning');
             }
         } catch (error) {
-            console.error('Supabase initialization error:', error);
-            updateConnectionStatus('Database connection failed', 'error');
+            console.error('❌ Supabase initialization error:', error);
+            updateConnectionStatus(`❌ Setup error: ${error.message}`, 'error');
+            showNotification(`Setup error: ${error.message}`, 'error');
         }
         
         // Application state
@@ -916,5 +949,5 @@ Then refresh this page!
             }
         }
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b572d5c7dc44c3',t:'MTc1NzI0MDE2NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b58a8d5767fde7',t:'MTc1NzI0MTEzNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
