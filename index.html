@@ -362,8 +362,8 @@
 
     <script>
         // ⚠️ REPLACE THESE WITH YOUR SUPABASE CREDENTIALS
-        const SUPABASE_URL = 'https://rhppryujbwmyxaguqkbk.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJocHByeXVqYndteXhhZ3Vxa2JrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcyMzc4MjAsImV4cCI6MjA3MjgxMzgyMH0.X_w5HWExraY5al-vwl9slch2-N5tAzl-Vjfeda1lUh4';
+        const SUPABASE_URL = https://rhppryujbwmyxaguqkbk.supabase.co;
+        const SUPABASE_ANON_KEY = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJocHByeXVqYndteXhhZ3Vxa2JrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcyMzc4MjAsImV4cCI6MjA3MjgxMzgyMH0.X_w5HWExraY5al-vwl9slch2-N5tAzl-Vjfeda1lUh4;
         
         // Initialize Supabase client
         let supabase;
@@ -429,12 +429,19 @@
 
         async function saveOrderToDatabase(order) {
             try {
+                // Remove the 'id' field if it exists, let Supabase auto-generate it
+                const orderData = { ...order };
+                delete orderData.id;
+                
                 const { data, error } = await supabase
                     .from('orders')
-                    .insert([order])
+                    .insert([orderData])
                     .select();
                 
-                if (error) throw error;
+                if (error) {
+                    console.error('Supabase error:', error);
+                    throw new Error(`Database error: ${error.message}`);
+                }
                 
                 return data[0];
             } catch (error) {
@@ -566,8 +573,9 @@
                         showNotification('Order saved to database!', 'success');
                     } else {
                         // Save to localStorage
+                        order.id = Date.now(); // Add a simple ID for localStorage
                         saveOrderToLocalStorage(order);
-                        showNotification('Order saved locally!', 'warning');
+                        showNotification('Order saved locally! (Database not connected)', 'warning');
                     }
                     
                     // Update display
@@ -580,7 +588,23 @@
                     
                 } catch (error) {
                     console.error('Error saving order:', error);
-                    showNotification('Failed to save order!', 'error');
+                    
+                    // Fallback to localStorage if database fails
+                    try {
+                        order.id = Date.now();
+                        saveOrderToLocalStorage(order);
+                        showNotification('Database failed - saved locally instead!', 'warning');
+                        
+                        // Update display
+                        updateOrdersDisplay();
+                        updateDashboardStats();
+                        
+                        // Close modal and reset form
+                        document.getElementById('orderModal').classList.add('hidden');
+                        orderForm.reset();
+                    } catch (localError) {
+                        showNotification('Failed to save order anywhere!', 'error');
+                    }
                 } finally {
                     // Reset button
                     submitBtn.innerHTML = 'Create Order';
@@ -804,5 +828,5 @@
             }
         }
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b5453d873ce9ea',t:'MTc1NzIzODI5Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b56058918ce1ac',t:'MTc1NzIzOTQwNy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
