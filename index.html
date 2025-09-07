@@ -256,6 +256,64 @@
                 </button>
             </div>
 
+            <!-- Edit Status Modal -->
+            <div id="editStatusModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 p-4">
+                <div class="bg-white rounded-2xl max-w-md w-full">
+                    <div class="flex justify-between items-center p-6 border-b">
+                        <h3 class="text-xl font-bold text-gray-900">Update Order Status</h3>
+                        <button id="closeEditStatusModal" class="text-gray-500 hover:text-gray-700 text-2xl font-light">×</button>
+                    </div>
+                    <div class="p-6">
+                        <form id="editStatusForm">
+                            <input type="hidden" id="editOrderId" name="orderId">
+                            <div class="mb-4">
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Current Order</label>
+                                <div id="editOrderInfo" class="bg-gray-50 p-3 rounded-lg text-sm text-gray-600"></div>
+                            </div>
+                            <div class="mb-6">
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">New Status</label>
+                                <select id="newStatus" name="status" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                                    <option value="Pending">📋 Pending</option>
+                                    <option value="In Production">⚙️ In Production</option>
+                                    <option value="Quality Check">🔍 Quality Check</option>
+                                    <option value="Ready for Dispatch">📦 Ready for Dispatch</option>
+                                    <option value="Completed">✅ Completed</option>
+                                    <option value="On Hold">⏸️ On Hold</option>
+                                    <option value="Cancelled">❌ Cancelled</option>
+                                </select>
+                            </div>
+                            <div class="mb-6">
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Status Notes (Optional)</label>
+                                <textarea id="statusNotes" name="notes" rows="3" placeholder="Add any notes about this status change..." class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"></textarea>
+                            </div>
+                            <div class="flex justify-end space-x-4">
+                                <button type="button" id="cancelEditStatus" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-medium transition-all">Cancel</button>
+                                <button type="submit" id="updateStatusBtn" class="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 font-semibold transition-all">
+                                    Update Status
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Job Card Modal -->
+            <div id="jobCardModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 p-4">
+                <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                    <div class="flex justify-between items-center p-6 border-b">
+                        <h3 class="text-2xl font-bold text-gray-900">Job Card</h3>
+                        <div class="flex space-x-2">
+                            <button id="printJobCard" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">🖨️ Print</button>
+                            <button id="saveJobCard" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">💾 Save PDF</button>
+                            <button id="closeJobCardModal" class="text-gray-500 hover:text-gray-700 text-2xl font-light">×</button>
+                        </div>
+                    </div>
+                    <div id="jobCardContent" class="p-6">
+                        <!-- Job card content will be generated here -->
+                    </div>
+                </div>
+            </div>
+
             <!-- Order Form Modal -->
             <div id="orderModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 p-4">
                 <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
@@ -770,6 +828,18 @@
             const closeOrderModal = document.getElementById('closeOrderModal');
             const cancelOrder = document.getElementById('cancelOrder');
             
+            // Edit Status Modal
+            const editStatusModal = document.getElementById('editStatusModal');
+            const closeEditStatusModal = document.getElementById('closeEditStatusModal');
+            const cancelEditStatus = document.getElementById('cancelEditStatus');
+            
+            // Job Card Modal
+            const jobCardModal = document.getElementById('jobCardModal');
+            const closeJobCardModal = document.getElementById('closeJobCardModal');
+            const printJobCard = document.getElementById('printJobCard');
+            const saveJobCard = document.getElementById('saveJobCard');
+            
+            // Order Modal Events
             newOrderBtn.addEventListener('click', () => {
                 orderModal.classList.remove('hidden');
             });
@@ -782,12 +852,50 @@
                 orderModal.classList.add('hidden');
             });
             
-            // Close modal when clicking outside
+            // Edit Status Modal Events
+            closeEditStatusModal.addEventListener('click', () => {
+                editStatusModal.classList.add('hidden');
+            });
+            
+            cancelEditStatus.addEventListener('click', () => {
+                editStatusModal.classList.add('hidden');
+            });
+            
+            // Job Card Modal Events
+            closeJobCardModal.addEventListener('click', () => {
+                jobCardModal.classList.add('hidden');
+            });
+            
+            printJobCard.addEventListener('click', () => {
+                printJobCardContent();
+            });
+            
+            saveJobCard.addEventListener('click', () => {
+                saveJobCardAsPDF();
+            });
+            
+            // Close modals when clicking outside
             orderModal.addEventListener('click', (e) => {
                 if (e.target === orderModal) {
                     orderModal.classList.add('hidden');
                 }
             });
+            
+            editStatusModal.addEventListener('click', (e) => {
+                if (e.target === editStatusModal) {
+                    editStatusModal.classList.add('hidden');
+                }
+            });
+            
+            jobCardModal.addEventListener('click', (e) => {
+                if (e.target === jobCardModal) {
+                    jobCardModal.classList.add('hidden');
+                }
+            });
+            
+            // Edit Status Form Submission
+            const editStatusForm = document.getElementById('editStatusForm');
+            editStatusForm.addEventListener('submit', handleStatusUpdate);
         }
 
         // Order form handling
@@ -913,7 +1021,8 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div class="flex space-x-2">
-                            <button onclick="viewOrder('${order.id || order.order_id}')" class="text-blue-600 hover:text-blue-900 font-medium">View</button>
+                            <button onclick="generateJobCard('${order.id || order.order_id}')" class="text-blue-600 hover:text-blue-900 font-medium">Job Card</button>
+                            <button onclick="editOrderStatus('${order.id || order.order_id}')" class="text-green-600 hover:text-green-900 font-medium">Edit</button>
                             <button onclick="deleteOrder('${order.id || order.order_id}')" class="text-red-600 hover:text-red-900 font-medium">Delete</button>
                         </div>
                     </td>
@@ -1036,11 +1145,367 @@
         }
 
         // Order actions
-        function viewOrder(orderId) {
+        function editOrderStatus(orderId) {
             const order = orders.find(o => (o.id === orderId || o.order_id === orderId));
-            if (order) {
-                alert(`Order Details:\n\nID: ${order.order_id}\nCustomer: ${order.customer}\nDesign: ${order.design}\nQuantity: ${order.quantity}\nStatus: ${order.status}\nPriority: ${order.priority}`);
+            if (!order) {
+                showNotification('Order not found!', 'error');
+                return;
             }
+            
+            // Populate the edit form
+            document.getElementById('editOrderId').value = order.id || order.order_id;
+            document.getElementById('editOrderInfo').innerHTML = `
+                <strong>${order.order_id}</strong> - ${order.customer}<br>
+                <span class="text-gray-500">${order.design} • ${order.quantity} units</span><br>
+                <span class="text-sm">Current Status: <span class="font-medium">${order.status}</span></span>
+            `;
+            document.getElementById('newStatus').value = order.status;
+            document.getElementById('statusNotes').value = '';
+            
+            // Show the modal
+            document.getElementById('editStatusModal').classList.remove('hidden');
+        }
+
+        async function handleStatusUpdate(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const orderId = formData.get('orderId');
+            const newStatus = formData.get('status');
+            const notes = formData.get('notes');
+            
+            const updateBtn = document.getElementById('updateStatusBtn');
+            updateBtn.innerHTML = '<div class="loading-spinner mr-2"></div>Updating...';
+            updateBtn.disabled = true;
+            
+            try {
+                // Find the order
+                const orderIndex = orders.findIndex(o => (o.id === orderId || o.order_id === orderId));
+                if (orderIndex === -1) {
+                    throw new Error('Order not found');
+                }
+                
+                const order = orders[orderIndex];
+                const oldStatus = order.status;
+                
+                // Update the order
+                order.status = newStatus;
+                order.updated_at = new Date().toISOString();
+                if (notes) {
+                    order.status_notes = notes;
+                }
+                
+                if (isConnected) {
+                    // Update in database
+                    const { error } = await supabase
+                        .from('orders')
+                        .update({ 
+                            status: newStatus, 
+                            updated_at: order.updated_at,
+                            status_notes: notes 
+                        })
+                        .eq('id', order.id);
+                    
+                    if (error) throw error;
+                    
+                    showNotification(`Order status updated from "${oldStatus}" to "${newStatus}"!`, 'success');
+                } else {
+                    // Update in localStorage
+                    localStorage.setItem('orders', JSON.stringify(orders));
+                    showNotification(`Order status updated locally from "${oldStatus}" to "${newStatus}"!`, 'warning');
+                }
+                
+                // Update displays
+                updateOrdersDisplay();
+                updateDashboardStats();
+                
+                // Close modal
+                document.getElementById('editStatusModal').classList.add('hidden');
+                
+            } catch (error) {
+                console.error('Error updating status:', error);
+                showNotification(`Failed to update status: ${error.message}`, 'error');
+            } finally {
+                updateBtn.innerHTML = 'Update Status';
+                updateBtn.disabled = false;
+            }
+        }
+
+        function generateJobCard(orderId) {
+            const order = orders.find(o => (o.id === orderId || o.order_id === orderId));
+            if (!order) {
+                showNotification('Order not found!', 'error');
+                return;
+            }
+            
+            // Generate job card content
+            const jobCardContent = createJobCardHTML(order);
+            document.getElementById('jobCardContent').innerHTML = jobCardContent;
+            
+            // Show the modal
+            document.getElementById('jobCardModal').classList.remove('hidden');
+            
+            showNotification('Job card generated successfully!', 'success');
+        }
+
+        function createJobCardHTML(order) {
+            const currentDate = new Date().toLocaleDateString();
+            const deliveryDate = order.delivery_date ? new Date(order.delivery_date).toLocaleDateString() : 'Not specified';
+            
+            return `
+                <div class="job-card-print bg-white" id="printableJobCard">
+                    <!-- Header -->
+                    <div class="border-b-2 border-gray-800 pb-4 mb-6">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h1 class="text-3xl font-bold text-gray-900">SCHIFFLI EMBROIDERY</h1>
+                                <p class="text-lg text-gray-600">Production Job Card</p>
+                            </div>
+                            <div class="text-right">
+                                <div class="bg-blue-600 text-white px-4 py-2 rounded-lg">
+                                    <div class="text-sm">Job Card #</div>
+                                    <div class="text-xl font-bold">${order.order_id}</div>
+                                </div>
+                                <div class="text-sm text-gray-600 mt-2">Generated: ${currentDate}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Order Information -->
+                    <div class="grid grid-cols-2 gap-8 mb-8">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4 border-b border-gray-300 pb-2">Order Details</h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between">
+                                    <span class="font-medium text-gray-700">Order ID:</span>
+                                    <span class="text-gray-900">${order.order_id}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="font-medium text-gray-700">Customer:</span>
+                                    <span class="text-gray-900">${order.customer}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="font-medium text-gray-700">Design:</span>
+                                    <span class="text-gray-900">${order.design}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="font-medium text-gray-700">Quantity:</span>
+                                    <span class="text-gray-900 font-semibold">${order.quantity} units</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="font-medium text-gray-700">Priority:</span>
+                                    <span class="px-2 py-1 rounded text-sm font-medium ${getPriorityColor(order.priority)}">${order.priority}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4 border-b border-gray-300 pb-2">Production Details</h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between">
+                                    <span class="font-medium text-gray-700">Fabric:</span>
+                                    <span class="text-gray-900">${order.fabric || 'Not specified'}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="font-medium text-gray-700">Yarn Type:</span>
+                                    <span class="text-gray-900">${order.yarn_type || 'Not specified'}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="font-medium text-gray-700">Stitches:</span>
+                                    <span class="text-gray-900">${order.stitches || 'Not specified'}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="font-medium text-gray-700">Placement:</span>
+                                    <span class="text-gray-900">${order.embroidery_placement || 'Not specified'}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="font-medium text-gray-700">Design Height:</span>
+                                    <span class="text-gray-900">${order.design_height ? order.design_height + '"' : 'Not specified'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Timeline -->
+                    <div class="mb-8">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4 border-b border-gray-300 pb-2">Production Timeline</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="flex justify-between">
+                                <span class="font-medium text-gray-700">Order Date:</span>
+                                <span class="text-gray-900">${new Date(order.created_at).toLocaleDateString()}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-medium text-gray-700">Delivery Date:</span>
+                                <span class="text-gray-900 ${new Date(order.delivery_date) < new Date() ? 'text-red-600 font-semibold' : ''}">${deliveryDate}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Instructions -->
+                    ${order.instructions ? `
+                    <div class="mb-8">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4 border-b border-gray-300 pb-2">Special Instructions</h3>
+                        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+                            <p class="text-gray-800">${order.instructions}</p>
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    <!-- Production Checklist -->
+                    <div class="mb-8">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4 border-b border-gray-300 pb-2">Production Checklist</h3>
+                        <div class="grid grid-cols-2 gap-6">
+                            <div class="space-y-3">
+                                <div class="flex items-center space-x-3">
+                                    <input type="checkbox" class="w-5 h-5 text-blue-600 rounded">
+                                    <span class="text-gray-700">Design loaded on machine</span>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <input type="checkbox" class="w-5 h-5 text-blue-600 rounded">
+                                    <span class="text-gray-700">Fabric prepared and positioned</span>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <input type="checkbox" class="w-5 h-5 text-blue-600 rounded">
+                                    <span class="text-gray-700">Yarn colors verified</span>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <input type="checkbox" class="w-5 h-5 text-blue-600 rounded">
+                                    <span class="text-gray-700">Machine calibrated</span>
+                                </div>
+                            </div>
+                            <div class="space-y-3">
+                                <div class="flex items-center space-x-3">
+                                    <input type="checkbox" class="w-5 h-5 text-blue-600 rounded">
+                                    <span class="text-gray-700">Production started</span>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <input type="checkbox" class="w-5 h-5 text-blue-600 rounded">
+                                    <span class="text-gray-700">Quality check passed</span>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <input type="checkbox" class="w-5 h-5 text-blue-600 rounded">
+                                    <span class="text-gray-700">Final inspection completed</span>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <input type="checkbox" class="w-5 h-5 text-blue-600 rounded">
+                                    <span class="text-gray-700">Ready for dispatch</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Signatures -->
+                    <div class="border-t-2 border-gray-300 pt-6">
+                        <div class="grid grid-cols-3 gap-8">
+                            <div class="text-center">
+                                <div class="border-b border-gray-400 mb-2 h-12"></div>
+                                <p class="text-sm font-medium text-gray-700">Production Manager</p>
+                                <p class="text-xs text-gray-500">Date: ___________</p>
+                            </div>
+                            <div class="text-center">
+                                <div class="border-b border-gray-400 mb-2 h-12"></div>
+                                <p class="text-sm font-medium text-gray-700">Quality Inspector</p>
+                                <p class="text-xs text-gray-500">Date: ___________</p>
+                            </div>
+                            <div class="text-center">
+                                <div class="border-b border-gray-400 mb-2 h-12"></div>
+                                <p class="text-sm font-medium text-gray-700">Dispatch Manager</p>
+                                <p class="text-xs text-gray-500">Date: ___________</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="text-center text-xs text-gray-500 mt-8 pt-4 border-t border-gray-200">
+                        <p>This job card was generated automatically by the Schiffli Embroidery Management System</p>
+                        <p>Generated on ${currentDate} | Job Card ID: ${order.order_id}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function printJobCardContent() {
+            const printContent = document.getElementById('printableJobCard').innerHTML;
+            const printWindow = window.open('', '_blank');
+            
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Job Card - ${document.getElementById('printableJobCard').querySelector('.text-xl').textContent}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        .bg-blue-600 { background-color: #2563eb !important; }
+                        .text-white { color: white !important; }
+                        .border-b-2 { border-bottom: 2px solid #374151; }
+                        .border-b { border-bottom: 1px solid #d1d5db; }
+                        .border-t-2 { border-top: 2px solid #d1d5db; }
+                        .border-t { border-top: 1px solid #e5e7eb; }
+                        .grid { display: grid; }
+                        .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+                        .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+                        .gap-8 { gap: 2rem; }
+                        .gap-6 { gap: 1.5rem; }
+                        .gap-4 { gap: 1rem; }
+                        .mb-8 { margin-bottom: 2rem; }
+                        .mb-6 { margin-bottom: 1.5rem; }
+                        .mb-4 { margin-bottom: 1rem; }
+                        .mb-2 { margin-bottom: 0.5rem; }
+                        .mt-8 { margin-top: 2rem; }
+                        .mt-2 { margin-top: 0.5rem; }
+                        .pb-4 { padding-bottom: 1rem; }
+                        .pb-2 { padding-bottom: 0.5rem; }
+                        .pt-6 { padding-top: 1.5rem; }
+                        .pt-4 { padding-top: 1rem; }
+                        .px-4 { padding-left: 1rem; padding-right: 1rem; }
+                        .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+                        .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+                        .p-4 { padding: 1rem; }
+                        .rounded-lg { border-radius: 0.5rem; }
+                        .rounded { border-radius: 0.25rem; }
+                        .text-3xl { font-size: 1.875rem; }
+                        .text-xl { font-size: 1.25rem; }
+                        .text-lg { font-size: 1.125rem; }
+                        .text-sm { font-size: 0.875rem; }
+                        .text-xs { font-size: 0.75rem; }
+                        .font-bold { font-weight: 700; }
+                        .font-semibold { font-weight: 600; }
+                        .font-medium { font-weight: 500; }
+                        .text-center { text-align: center; }
+                        .text-right { text-align: right; }
+                        .flex { display: flex; }
+                        .justify-between { justify-content: space-between; }
+                        .items-center { align-items: center; }
+                        .items-start { align-items: flex-start; }
+                        .space-y-3 > * + * { margin-top: 0.75rem; }
+                        .space-x-3 > * + * { margin-left: 0.75rem; }
+                        .bg-yellow-50 { background-color: #fefce8; }
+                        .border-l-4 { border-left: 4px solid; }
+                        .border-yellow-400 { border-color: #facc15; }
+                        .h-12 { height: 3rem; }
+                        .w-5 { width: 1.25rem; }
+                        .h-5 { height: 1.25rem; }
+                        @media print {
+                            body { margin: 0; }
+                            .no-print { display: none; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${printContent}
+                </body>
+                </html>
+            `);
+            
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        function saveJobCardAsPDF() {
+            // For now, we'll use the print functionality
+            // In a real application, you might want to use a library like jsPDF
+            showNotification('Use Print option and select "Save as PDF" in your browser', 'info');
+            printJobCardContent();
         }
 
         async function deleteOrder(orderId) {
@@ -1763,5 +2228,5 @@ CREATE INDEX idx_quality_control_passed ON quality_control(passed);`
             }
         }
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b5a577b1b8e9ea',t:'MTc1NzI0MjIzOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b5b95a22d289bc',t:'MTc1NzI0MzA1My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
