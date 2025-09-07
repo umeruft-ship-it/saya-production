@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schiffli Embroidery Production Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .progress-bar {
+            transition: width 0.5s ease-in-out;
+        }
+        
+        .notification {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .nav-tab {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .nav-tab::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-tab.active::before {
+            width: 100%;
+        }
+        
+        .floating-action {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 min-h-screen">
+    <!-- Notification Container -->
+    <div id="notificationContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
+    
+    <!-- Header -->
+    <header class="glass-effect shadow-xl border-b border-white/20 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="w-14 h-14 gradient-bg rounded-2xl flex items-center justify-center shadow-lg">
+                        <span class="text-white font-bold text-2xl">SE</span>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                            Schiffli Embroidery
+                        </h1>
+                        <p class="text-sm text-gray-600 font-medium">Complete Production Management System</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-8">
+                    <div class="grid grid-cols-4 gap-6">
+                        <div class="text-center">
+                            <p class="text-xs text-gray-500 font-medium">Active Orders</p>
+                            <p class="text-2xl font-bold text-blue-600" id="headerActiveOrders">5</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-xs text-gray-500 font-medium">Production</p>
+                            <p class="text-2xl font-bold text-green-600" id="headerProduction">3</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-xs text-gray-500 font-medium">Quality Queue</p>
+                            <p class="text-2xl font-bold text-yellow-600" id="headerQuality">2</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-xs text-gray-500 font-medium">Ready</p>
+                            <p class="text-2xl font-bold text-purple-600" id="headerReady">1</p>
+                        </div>
+                    </div>
+                    
+                    <div class="text-right">
+                        <p class="text-sm text-gray-600 font-medium" id="currentDate"></p>
+                        <p class="text-xl font-bold text-gray-900" id="currentTime"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="glass-effect shadow-sm border-b border-white/20 sticky top-[88px] z-30">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex space-x-1 overflow-x-auto">
+                <button class="nav-tab px-6 py-4 text-blue-600 font-semibold whitespace-nowrap active" data-section="dashboard">
+                    <span class="flex items-center space-x-2">
+                        <span>📊</span>
+                        <span>CEO Dashboard</span>
+                    </span>
+                </button>
+                <button class="nav-tab px-6 py-4 text-gray-600 hover:text-blue-600 font-medium whitespace-nowrap transition-colors" data-section="orders">
+                    <span class="flex items-center space-x-2">
+                        <span>📋</span>
+                        <span>Orders</span>
+                    </span>
+                </button>
+                <button class="nav-tab px-6 py-4 text-gray-600 hover:text-blue-600 font-medium whitespace-nowrap transition-colors" data-section="yarn">
+                    <span class="flex items-center space-x-2">
+                        <span>🧶</span>
+                        <span>Yarn Stock</span>
+                    </span>
+                </button>
+                <button class="nav-tab px-6 py-4 text-gray-600 hover:text-blue-600 font-medium whitespace-nowrap transition-colors" data-section="production">
+                    <span class="flex items-center space-x-2">
+                        <span>⚙️</span>
+                        <span>Production</span>
+                    </span>
+                </button>
+                <button class="nav-tab px-6 py-4 text-gray-600 hover:text-blue-600 font-medium whitespace-nowrap transition-colors" data-section="quality">
+                    <span class="flex items-center space-x-2">
+                        <span>🔍</span>
+                        <span>Quality Control</span>
+                    </span>
+                </button>
+                <button class="nav-tab px-6 py-4 text-gray-600 hover:text-blue-600 font-medium whitespace-nowrap transition-colors" data-section="machines">
+                    <span class="flex items-center space-x-2">
+                        <span>🏭</span>
+                        <span>Machines</span>
+                    </span>
+                </button>
+                <button class="nav-tab px-6 py-4 text-gray-600 hover:text-blue-600 font-medium whitespace-nowrap transition-colors" data-section="dispatch">
+                    <span class="flex items-center space-x-2">
+                        <span>🚚</span>
+                        <span>Dispatch</span>
+                    </span>
+                </button>
+                <button class="nav-tab px-6 py-4 text-gray-600 hover:text-blue-600 font-medium whitespace-nowrap transition-colors" data-section="reports">
+                    <span class="flex items-center space-x-2">
+                        <span>📈</span>
+                        <span>Reports</span>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-6 py-8">
+        <!-- CEO Dashboard Section -->
+        <div id="dashboard" class="section">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-3xl font-bold text-gray-900">CEO Dashboard</h2>
+                <div class="flex space-x-3">
+                    <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                        📊 Live Analytics
+                    </button>
+                    <button class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
+                        📈 Export Report
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Key Metrics -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+                <div class="card-hover bg-white rounded-2xl shadow-lg p-6 border-l-4 border-blue-500">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Active Orders</p>
+                            <p class="text-4xl font-bold text-gray-900 mt-2">5</p>
+                            <p class="text-xs text-green-600 mt-1">↗ +12% from last week</p>
+                        </div>
+                        <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center">
+                            <span class="text-blue-600 text-2xl">📋</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-hover bg-white rounded-2xl shadow-lg p-6 border-l-4 border-green-500">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Production Efficiency</p>
+                            <p class="text-4xl font-bold text-gray-900 mt-2">87%</p>
+                            <p class="text-xs text-green-600 mt-1">↗ +5% from yesterday</p>
+                        </div>
+                        <div class="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center">
+                            <span class="text-green-600 text-2xl">⚡</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-hover bg-white rounded-2xl shadow-lg p-6 border-l-4 border-yellow-500">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">In Quality</p>
+                            <p class="text-4xl font-bold text-gray-900 mt-2">2</p>
+                            <p class="text-xs text-yellow-600 mt-1">→ Same as yesterday</p>
+                        </div>
+                        <div class="w-16 h-16 bg-yellow-100 rounded-2xl flex items-center justify-center">
+                            <span class="text-yellow-600 text-2xl">🔍</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-hover bg-white rounded-2xl shadow-lg p-6 border-l-4 border-purple-500">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Ready Dispatch</p>
+                            <p class="text-4xl font-bold text-gray-900 mt-2">1</p>
+                            <p class="text-xs text-purple-600 mt-1">↗ +3 since morning</p>
+                        </div>
+                        <div class="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center">
+                            <span class="text-purple-600 text-2xl">📦</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-hover bg-white rounded-2xl shadow-lg p-6 border-l-4 border-red-500">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Machine Utilization</p>
+                            <p class="text-4xl font-bold text-gray-900 mt-2">78%</p>
+                            <p class="text-xs text-red-600 mt-1">↘ -2% from yesterday</p>
+                        </div>
+                        <div class="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center">
+                            <span class="text-red-600 text-2xl">⚙️</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Production Flow Chart -->
+            <div class="card-hover bg-white rounded-2xl shadow-lg p-8 mb-8">
+                <h3 class="text-2xl font-semibold text-gray-900 mb-6">Production Flow Status</h3>
+                <div class="flex items-center justify-between space-x-4 overflow-x-auto">
+                    <div class="flex flex-col items-center min-w-0 flex-1">
+                        <div class="w-20 h-20 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-2xl mb-3 shadow-lg">
+                            <span>2</span>
+                        </div>
+                        <p class="text-sm font-semibold text-gray-900">Orders Received</p>
+                        <p class="text-xs text-gray-600">Pending Job Cards</p>
+                    </div>
+                    <div class="text-gray-400 text-2xl">→</div>
+                    <div class="flex flex-col items-center min-w-0 flex-1">
+                        <div class="w-20 h-20 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center text-white font-bold text-2xl mb-3 shadow-lg">
+                            <span>3</span>
+                        </div>
+                        <p class="text-sm font-semibold text-gray-900">In Production</p>
+                        <p class="text-xs text-gray-600">On Machines</p>
+                    </div>
+                    <div class="text-gray-400 text-2xl">→</div>
+                    <div class="flex flex-col items-center min-w-0 flex-1">
+                        <div class="w-20 h-20 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-full flex items-center justify-center text-white font-bold text-2xl mb-3 shadow-lg">
+                            <span>2</span>
+                        </div>
+                        <p class="text-sm font-semibold text-gray-900">Quality Check</p>
+                        <p class="text-xs text-gray-600">Inspection & Mending</p>
+                    </div>
+                    <div class="text-gray-400 text-2xl">→</div>
+                    <div class="flex flex-col items-center min-w-0 flex-1">
+                        <div class="w-20 h-20 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-2xl mb-3 shadow-lg">
+                            <span>1</span>
+                        </div>
+                        <p class="text-sm font-semibold text-gray-900">Ready Dispatch</p>
+                        <p class="text-xs text-gray-600">Awaiting Delivery</p>
+                    </div>
+                    <div class="text-gray-400 text-2xl">→</div>
+                    <div class="flex flex-col items-center min-w-0 flex-1">
+                        <div class="w-20 h-20 bg-gradient-to-r from-gray-500 to-gray-600 rounded-full flex items-center justify-center text-white font-bold text-2xl mb-3 shadow-lg">
+                            <span>0</span>
+                        </div>
+                        <p class="text-sm font-semibold text-gray-900">Rejected</p>
+                        <p class="text-xs text-gray-600">In Store</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="card-hover bg-white rounded-2xl shadow-lg p-6">
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">Recent Activity</h3>
+                <div class="space-y-3">
+                    <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                        <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                        <div class="flex-1">
+                            <p class="text-sm text-gray-900">Order ORD-2024-001 moved to Quality Check</p>
+                            <p class="text-xs text-gray-500">2 minutes ago</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                        <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+                        <div class="flex-1">
+                            <p class="text-sm text-gray-900">Machine M-05 started production</p>
+                            <p class="text-xs text-gray-500">15 minutes ago</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                        <div class="w-2 h-2 rounded-full bg-yellow-500"></div>
+                        <div class="flex-1">
+                            <p class="text-sm text-gray-900">Yarn issued for Order ORD-2024-003</p>
+                            <p class="text-xs text-gray-500">1 hour ago</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Orders Section -->
+        <div id="orders" class="section hidden">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-3xl font-bold text-gray-900">Order Management</h2>
+                <button id="newOrderBtn" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all transform hover:scale-105">
+                    ➕ New Order
+                </button>
+            </div>
+
+            <!-- Order Form Modal -->
+            <div id="orderModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 p-4">
+                <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                    <div class="flex justify-between items-center p-6 border-b">
+                        <h3 class="text-2xl font-bold text-gray-900">Create New Order</h3>
+                        <button id="closeOrderModal" class="text-gray-500 hover:text-gray-700 text-3xl font-light">×</button>
+                    </div>
+                    <div class="p-6">
+                        <form id="orderForm" class="space-y-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Customer Name</label>
+                                    <input type="text" name="customer" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Design Name</label>
+                                    <input type="text" name="design" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Quantity</label>
+                                    <input type="number" name="quantity" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Fabric Type</label>
+                                    <select name="fabric" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                                        <option value="">Select Fabric</option>
+                                        <option value="Cotton">Cotton</option>
+                                        <option value="Silk">Silk</option>
+                                        <option value="Polyester">Polyester</option>
+                                        <option value="Linen">Linen</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Priority</label>
+                                    <select name="priority" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                                        <option value="Normal">Normal</option>
+                                        <option value="High">High</option>
+                                        <option value="Urgent">Urgent</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Delivery Date</label>
+                                    <input type="date" name="deliveryDate" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Special Instructions</label>
+                                <textarea name="instructions" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"></textarea>
+                            </div>
+                            
+                            <div class="flex justify-end space-x-4 pt-6">
+                                <button type="button" id="cancelOrder" class="px-8 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-medium transition-all">Cancel</button>
+                                <button type="submit" class="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 font-semibold transition-all">Create Order</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orders Table -->
+            <div class="card-hover bg-white rounded-2xl shadow-lg overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                    <h3 class="text-lg font-semibold text-gray-900">All Orders</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Order ID</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Customer</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Design</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Quantity</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Priority</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersTableBody" class="bg-white divide-y divide-gray-200">
+                            <!-- Orders will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Other sections (simplified for deployment) -->
+        <div id="yarn" class="section hidden">
+            <h2 class="text-3xl font-bold text-gray-900 mb-8">Yarn Stock Management</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="card-hover bg-white rounded-2xl shadow-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Cotton Yarn</h3>
+                    <p class="text-2xl font-bold text-green-600">2,450 kg</p>
+                    <div class="w-full bg-gray-200 rounded-full h-3 mt-2">
+                        <div class="bg-green-500 h-3 rounded-full" style="width: 82%"></div>
+                    </div>
+                    <p class="text-xs text-green-600 mt-1">82% of capacity</p>
+                </div>
+                <div class="card-hover bg-white rounded-2xl shadow-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Silk Yarn</h3>
+                    <p class="text-2xl font-bold text-blue-600">890 kg</p>
+                    <div class="w-full bg-gray-200 rounded-full h-3 mt-2">
+                        <div class="bg-blue-500 h-3 rounded-full" style="width: 67%"></div>
+                    </div>
+                    <p class="text-xs text-blue-600 mt-1">67% of capacity</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="production" class="section hidden">
+            <h2 class="text-3xl font-bold text-gray-900 mb-8">Production Management</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="card-hover bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-sm font-medium text-gray-600">Active Jobs</h3>
+                    <p class="text-3xl font-bold text-blue-600">8</p>
+                </div>
+                <div class="card-hover bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-sm font-medium text-gray-600">Completed Today</h3>
+                    <p class="text-3xl font-bold text-green-600">12</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="quality" class="section hidden">
+            <h2 class="text-3xl font-bold text-gray-900 mb-8">Quality Control</h2>
+            <p class="text-gray-600">Quality control management interface</p>
+        </div>
+
+        <div id="machines" class="section hidden">
+            <h2 class="text-3xl font-bold text-gray-900 mb-8">Machine Management</h2>
+            <p class="text-gray-600">Machine status and management interface</p>
+        </div>
+
+        <div id="dispatch" class="section hidden">
+            <h2 class="text-3xl font-bold text-gray-900 mb-8">Dispatch Management</h2>
+            <p class="text-gray-600">Dispatch and delivery management interface</p>
+        </div>
+
+        <div id="reports" class="section hidden">
+            <h2 class="text-3xl font-bold text-gray-900 mb-8">Reports & Analytics</h2>
+            <p class="text-gray-600">Reports and analytics dashboard</p>
+        </div>
+    </div>
+
+    <!-- Floating Action Button -->
+    <div class="floating-action">
+        <button id="quickActionBtn" class="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full shadow-2xl hover:shadow-3xl transition-all transform hover:scale-110 flex items-center justify-center">
+            <span class="text-2xl">⚡</span>
+        </button>
+    </div>
+
+    <script>
+        // Application state
+        let orders = JSON.parse(localStorage.getItem('orders')) || [];
+        let orderCounter = parseInt(localStorage.getItem('orderCounter')) || 1;
+
+        // Initialize application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeNavigation();
+            initializeModals();
+            initializeOrderForm();
+            updateTime();
+            loadOrders();
+            
+            // Update time every second
+            setInterval(updateTime, 1000);
+        });
+
+        // Navigation system
+        function initializeNavigation() {
+            const navTabs = document.querySelectorAll('.nav-tab');
+            const sections = document.querySelectorAll('.section');
+            
+            navTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const targetSection = this.dataset.section;
+                    
+                    // Hide all sections
+                    sections.forEach(section => {
+                        section.classList.add('hidden');
+                    });
+                    
+                    // Show target section
+                    document.getElementById(targetSection).classList.remove('hidden');
+                    
+                    // Update active tab
+                    navTabs.forEach(t => {
+                        t.classList.remove('active', 'text-blue-600');
+                        t.classList.add('text-gray-600');
+                    });
+                    
+                    this.classList.add('active', 'text-blue-600');
+                    this.classList.remove('text-gray-600');
+                });
+            });
+        }
+
+        // Modal system
+        function initializeModals() {
+            const newOrderBtn = document.getElementById('newOrderBtn');
+            const orderModal = document.getElementById('orderModal');
+            const closeOrderModal = document.getElementById('closeOrderModal');
+            const cancelOrder = document.getElementById('cancelOrder');
+            
+            newOrderBtn.addEventListener('click', () => {
+                orderModal.classList.remove('hidden');
+            });
+            
+            closeOrderModal.addEventListener('click', () => {
+                orderModal.classList.add('hidden');
+            });
+            
+            cancelOrder.addEventListener('click', () => {
+                orderModal.classList.add('hidden');
+            });
+            
+            // Close modal when clicking outside
+            orderModal.addEventListener('click', (e) => {
+                if (e.target === orderModal) {
+                    orderModal.classList.add('hidden');
+                }
+            });
+        }
+
+        // Order form handling
+        function initializeOrderForm() {
+            const orderForm = document.getElementById('orderForm');
+            
+            orderForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(orderForm);
+                const order = {
+                    id: `ORD-2024-${orderCounter.toString().padStart(3, '0')}`,
+                    customer: formData.get('customer'),
+                    design: formData.get('design'),
+                    quantity: parseInt(formData.get('quantity')),
+                    fabric: formData.get('fabric'),
+                    priority: formData.get('priority'),
+                    deliveryDate: formData.get('deliveryDate'),
+                    instructions: formData.get('instructions'),
+                    status: 'Pending',
+                    createdAt: new Date().toISOString()
+                };
+                
+                // Add to orders array
+                orders.push(order);
+                orderCounter++;
+                
+                // Save to localStorage
+                localStorage.setItem('orders', JSON.stringify(orders));
+                localStorage.setItem('orderCounter', orderCounter.toString());
+                
+                // Update display
+                loadOrders();
+                
+                // Close modal and reset form
+                document.getElementById('orderModal').classList.add('hidden');
+                orderForm.reset();
+                
+                showNotification('Order created successfully!', 'success');
+            });
+        }
+
+        // Load and display orders
+        function loadOrders() {
+            const tbody = document.getElementById('ordersTableBody');
+            tbody.innerHTML = '';
+            
+            orders.forEach(order => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50 transition-colors';
+                
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${order.id}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${order.customer}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${order.design}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${order.quantity}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}">
+                            ${order.status}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-3 py-1 text-xs font-semibold rounded-full ${getPriorityColor(order.priority)}">
+                            ${order.priority}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div class="flex space-x-2">
+                            <button onclick="viewOrder('${order.id}')" class="text-blue-600 hover:text-blue-900 font-medium">View</button>
+                            <button onclick="editOrder('${order.id}')" class="text-green-600 hover:text-green-900 font-medium">Edit</button>
+                            <button onclick="deleteOrder('${order.id}')" class="text-red-600 hover:text-red-900 font-medium">Delete</button>
+                        </div>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        // Utility functions
+        function getStatusColor(status) {
+            switch (status) {
+                case 'Pending': return 'bg-yellow-100 text-yellow-800';
+                case 'In Production': return 'bg-blue-100 text-blue-800';
+                case 'Quality Check': return 'bg-orange-100 text-orange-800';
+                case 'Ready for Dispatch': return 'bg-purple-100 text-purple-800';
+                case 'Dispatched': return 'bg-green-100 text-green-800';
+                default: return 'bg-gray-100 text-gray-800';
+            }
+        }
+
+        function getPriorityColor(priority) {
+            switch (priority) {
+                case 'Urgent': return 'bg-red-100 text-red-800';
+                case 'High': return 'bg-orange-100 text-orange-800';
+                case 'Normal': return 'bg-gray-100 text-gray-800';
+                default: return 'bg-gray-100 text-gray-800';
+            }
+        }
+
+        function updateTime() {
+            const now = new Date();
+            const dateElement = document.getElementById('currentDate');
+            const timeElement = document.getElementById('currentTime');
+            
+            if (dateElement) {
+                dateElement.textContent = now.toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            }
+            
+            if (timeElement) {
+                timeElement.textContent = now.toLocaleTimeString();
+            }
+        }
+
+        // Order actions
+        function viewOrder(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            if (order) {
+                alert(`Order Details:\n\nID: ${order.id}\nCustomer: ${order.customer}\nDesign: ${order.design}\nQuantity: ${order.quantity}\nStatus: ${order.status}`);
+            }
+        }
+
+        function editOrder(orderId) {
+            showNotification('Edit functionality coming soon!', 'info');
+        }
+
+        function deleteOrder(orderId) {
+            if (confirm('Are you sure you want to delete this order?')) {
+                orders = orders.filter(o => o.id !== orderId);
+                localStorage.setItem('orders', JSON.stringify(orders));
+                loadOrders();
+                showNotification('Order deleted successfully!', 'success');
+            }
+        }
+
+        // Notification system
+        function showNotification(message, type = 'info') {
+            const container = document.getElementById('notificationContainer');
+            if (!container) return;
+            
+            const notification = document.createElement('div');
+            notification.className = `notification p-4 rounded-lg shadow-lg text-white max-w-sm ${getNotificationColor(type)}`;
+            notification.textContent = message;
+            
+            container.appendChild(notification);
+            
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+        
+        function getNotificationColor(type) {
+            switch (type) {
+                case 'success': return 'bg-green-600';
+                case 'error': return 'bg-red-600';
+                case 'warning': return 'bg-yellow-600';
+                default: return 'bg-blue-600';
+            }
+        }
+
+        // Quick action button
+        document.getElementById('quickActionBtn').addEventListener('click', function() {
+            showNotification('Quick actions menu coming soon!', 'info');
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b4d804c6ca21e8',t:'MTc1NzIzMzgyNC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
