@@ -1237,17 +1237,47 @@
                 }
                 
                 if (isConnected) {
-                    // Update in database
-                    const { error } = await supabase
-                        .from('orders')
-                        .update({ 
-                            status: newStatus, 
-                            updated_at: order.updated_at,
-                            status_notes: notes 
-                        })
-                        .eq('id', order.id);
+                    // Update in database - only update existing columns
+                    const updateData = { 
+                        status: newStatus, 
+                        updated_at: order.updated_at
+                    };
                     
-                    if (error) throw error;
+                    // Only add notes if the column exists (optional field)
+                    if (notes) {
+                        // Try to update with notes, but don't fail if column doesn't exist
+                        try {
+                            const { error } = await supabase
+                                .from('orders')
+                                .update({ ...updateData, status_notes: notes })
+                                .eq('id', order.id);
+                            
+                            if (error && error.message.includes('status_notes')) {
+                                // Column doesn't exist, update without notes
+                                const { error: retryError } = await supabase
+                                    .from('orders')
+                                    .update(updateData)
+                                    .eq('id', order.id);
+                                if (retryError) throw retryError;
+                            } else if (error) {
+                                throw error;
+                            }
+                        } catch (notesError) {
+                            // Fallback: update without notes
+                            const { error: fallbackError } = await supabase
+                                .from('orders')
+                                .update(updateData)
+                                .eq('id', order.id);
+                            if (fallbackError) throw fallbackError;
+                        }
+                    } else {
+                        // No notes, just update status
+                        const { error } = await supabase
+                            .from('orders')
+                            .update(updateData)
+                            .eq('id', order.id);
+                        if (error) throw error;
+                    }
                     
                     showNotification(`Order status updated from "${oldStatus}" to "${newStatus}"!`, 'success');
                 } else {
@@ -1877,6 +1907,7 @@ CREATE TABLE orders (
     instructions TEXT,
     design_image TEXT,
     status TEXT DEFAULT 'Pending',
+    status_notes TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -2394,5 +2425,5 @@ CREATE INDEX idx_quality_control_passed ON quality_control(passed);`
             }
         }
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b5cd4d731fe1ac',t:'MTc1NzI0Mzg3MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97b5e10346e3e1ac',t:'MTc1NzI0NDY3Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
